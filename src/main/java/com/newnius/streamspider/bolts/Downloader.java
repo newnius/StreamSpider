@@ -2,12 +2,6 @@ package com.newnius.streamspider.bolts;
 
 import java.util.Map;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,21 +35,18 @@ public class Downloader implements IRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
-		try {
-			String url = input.getStringByField("url");
+		String url = input.getStringByField("url");
 
-			CRSpider spider = new CRSpider(url);
-			CRMsg msg = spider.doGet();
-			if (msg.getCode() == CRErrorCode.SUCCESS) {
-				String html = msg.get("response");
-				collector.emit("html", new Values(url, html));
-				collector.ack(input);
-			} else {
-				collector.fail(input);
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		CRSpider spider = new CRSpider(url);
+		CRMsg msg = spider.doGet();
+		if (msg.getCode() == CRErrorCode.SUCCESS) {
+			String html = msg.get("response");
+			logger.info("Downloaded " + url);
+			collector.emit("html", new Values(url, html));
+		} else {
+			logger.info(msg.getMessage());
 		}
+		collector.ack(input);
 	}
 
 	@Override

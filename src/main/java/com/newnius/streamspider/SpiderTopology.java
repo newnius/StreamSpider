@@ -15,30 +15,27 @@ public class SpiderTopology {
 		Config conf = new Config();
 		conf.put("host", "192.168.56.110");
 		conf.put("port", "6379");
-		
+
 		SpiderConfig.redis_host = "192.168.56.110";
 		SpiderConfig.redis_port = 6379;
 
-		int spout_Parallelism_hint = 1;
-		int message_divider_Parallelism_hint = 2;
-		int order_container_Parallelism_hint = 3;
-		int count_Parallelism_hint = 1;
-		int tair_write_Parallelism_hint = 2;
+		int url_reader_parallelism = 1;
+		int downloader_parallelism = 8;
+		int html_saver_parallelism = 1;
+		int html_parser_parallelism = 2;
+		int url_saver_parallelism = 1;
 
 		TopologyBuilder builder = new TopologyBuilder();
 
-		builder.setSpout("url-reader", new URLReader(), spout_Parallelism_hint);
+		builder.setSpout("url-reader", new URLReader(), url_reader_parallelism);
 
-		builder.setBolt("downloader", new Downloader(), message_divider_Parallelism_hint).shuffleGrouping("url-reader",
-				"url");
+		builder.setBolt("downloader", new Downloader(), downloader_parallelism).shuffleGrouping("url-reader", "url");
 
-		builder.setBolt("html-parser", new HTMLParser(), order_container_Parallelism_hint).shuffleGrouping("downloader",
-				"html");
+		builder.setBolt("html-parser", new HTMLParser(), html_parser_parallelism).shuffleGrouping("downloader", "html");
 
-		builder.setBolt("html-saver", new HTMLSaver(), count_Parallelism_hint).shuffleGrouping("downloader", "html");
+		builder.setBolt("html-saver", new HTMLSaver(), html_saver_parallelism).shuffleGrouping("downloader", "html");
 
-		builder.setBolt("url-saver", new URLSaver(), tair_write_Parallelism_hint).shuffleGrouping("html-parser",
-				"urls");
+		builder.setBolt("url-saver", new URLSaver(), url_saver_parallelism).shuffleGrouping("html-parser", "urls");
 
 		String topologyName = SpiderConfig.TOPOLOGY_NAME;
 

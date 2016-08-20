@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.newnius.streamspider.SpiderConfig;
+import com.newnius.streamspider.util.JedisDAO;
 import com.newnius.streamspider.util.StringConverter;
 
 import redis.clients.jedis.Jedis;
@@ -17,7 +18,6 @@ import redis.clients.jedis.Jedis;
 public class UrlPatternFactory {
 	private static Set<String> patterns = null;
 	private static long lastUpdate = 0;
-	private static Jedis jedis = null;
 	private static Logger logger = LoggerFactory.getLogger(UrlPatternFactory.class);
 
 	public static Set<String> getAllPatterns() {
@@ -38,8 +38,10 @@ public class UrlPatternFactory {
 		return null;
 	}
 
+	
 	public static UrlPatternSetting getPatternSetting(String pattern) {
 		logger.info("getPatternSetting url_pattern_setting_" + pattern);
+		Jedis jedis = JedisDAO.getInstance();
 		Map<String, String> pairs = jedis.hgetAll("url_pattern_setting_" + pattern);
 
 		for (Entry<String, String> entry : pairs.entrySet()) {
@@ -56,17 +58,17 @@ public class UrlPatternFactory {
 		String[] tmp = patterns2followStr.split(",");
 		List<String> patterns2follow = Arrays.asList(tmp);
 		UrlPatternSetting patternSetting = new UrlPatternSetting(pattern, frequency, limitation,patterns2follow);
+		jedis.close();
 		return patternSetting;
 	}
 
 	private static void fetchAllPatterns() {
-		if (jedis == null) {
-			jedis = new Jedis(SpiderConfig.redis_host, SpiderConfig.redis_port);
-		}
+		Jedis jedis = JedisDAO.getInstance();
 		patterns = jedis.zrange("allowed_url_patterns", 0, -1);
 		for (String pattern : patterns) {
-			logger.info("Pattern " + pattern);
+			logger.info("Load pattern " + pattern);
 		}
+		jedis.close();
 	}
 
 }

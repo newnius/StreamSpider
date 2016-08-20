@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.newnius.streamspider.model.UrlPatternFactory;
 import com.newnius.streamspider.model.UrlPatternSetting;
+import com.newnius.streamspider.util.JedisDAO;
 import com.newnius.streamspider.util.StringConverter;
 
 import backtype.storm.task.OutputCollector;
@@ -24,14 +25,12 @@ public class URLSaver implements IRichBolt {
 	 */
 	private static final long serialVersionUID = 8575035865296521244L;
 	private OutputCollector collector;
-	private Jedis jedis;
 	private Logger logger;
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
-		this.jedis = new Jedis(stormConf.get("host").toString(), new Integer(stormConf.get("port").toString()));
 		this.logger = LoggerFactory.getLogger(getClass());
 	}
 
@@ -39,10 +38,10 @@ public class URLSaver implements IRichBolt {
 	public void execute(Tuple input) {
 		@SuppressWarnings("unchecked")
 		Set<String> urls = (Set<String>) input.getValueByField("urls");
-
+		Jedis jedis = JedisDAO.getInstance();
 		for (String url : urls) {
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
-			if (pattern != null && !jedis.exists("up_to_date_" + url)) {
+			if (pattern != null && !jedis.exists("last_update_" + url)) {
 				UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
 				int count = StringConverter.string2int(jedis.get("url_pattern_download_count_" + pattern), 0);
 				if (count < patternSetting.getLimitation() || patternSetting.getLimitation() == -1) {
@@ -51,6 +50,7 @@ public class URLSaver implements IRichBolt {
 				}
 			}
 		}
+		jedis.close();
 		collector.ack(input);
 	}
 

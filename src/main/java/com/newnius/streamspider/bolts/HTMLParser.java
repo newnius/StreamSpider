@@ -60,10 +60,10 @@ public class HTMLParser implements IRichBolt {
 		if (relatedPattern != null) {
 			List<String> patterns = UrlPatternFactory.getPatternSetting(relatedPattern).getPatterns2follow();
 			for (String pattern : patterns) {
+				logger.info("use pattern " + pattern);
 				for (String possibleUrl : possibleUrls) {
 					try {
 						String absoluteUrl = new URL(new URL(url), possibleUrl).toString();
-						logger.info("matching " + absoluteUrl);
 						if (absoluteUrl.matches(pattern)) {
 							urls.add(absoluteUrl);
 							logger.info("new url " + absoluteUrl);
