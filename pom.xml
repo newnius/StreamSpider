@@ -92,7 +92,7 @@
           Use "provided" scope to keep storm out of the jar-with-dependencies
           For IntelliJ dev, intellij will load properly.
         -->
-        <scope>${provided.scope}</scope>
+        <scope>provided</scope>
     </dependency>
  
 		<dependency>

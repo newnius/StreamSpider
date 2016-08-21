@@ -8,6 +8,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.IRichBolt;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,14 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.newnius.streamspider.model.UrlPatternFactory;
-
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.IRichBolt;
-import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 
 public class HTMLParser implements IRichBolt {
 
@@ -46,23 +45,25 @@ public class HTMLParser implements IRichBolt {
 		String url = input.getStringByField("url");
 		String html = input.getStringByField("html");
 
+		/* get all links as possible urls */
 		Document doc = Jsoup.parse(html);
 		Elements links = doc.select("a");
 		List<String> possibleUrls = new ArrayList<>();
 		for (Element link : links) {
-			String possibleUrl = link.attr("href");
-			possibleUrls.add(possibleUrl);
+			possibleUrls.add(link.attr("href"));
 		}
-
-		Set<String> urls = new TreeSet<>();
-
+		
 		String relatedPattern = UrlPatternFactory.getRelatedUrlPattern(url);
 		if (relatedPattern != null) {
+			Set<String> urls = new TreeSet<>();	
 			List<String> patterns = UrlPatternFactory.getPatternSetting(relatedPattern).getPatterns2follow();
 			for (String pattern : patterns) {
 				logger.info("use pattern " + pattern);
 				for (String possibleUrl : possibleUrls) {
 					try {
+						if (possibleUrl.contains("(")) {
+							continue;// ignore javascript:foo(bar)
+						}
 						String absoluteUrl = new URL(new URL(url), possibleUrl).toString();
 						if (absoluteUrl.matches(pattern)) {
 							urls.add(absoluteUrl);
@@ -73,14 +74,15 @@ public class HTMLParser implements IRichBolt {
 					}
 				}
 			}
+			collector.emit("urls", new Values(urls));
 		}
-		collector.emit("urls", new Values(urls));
 		collector.ack(input);
 	}
 
+	
+	/* patterns 4 test */
 	private List<String> getPatterns() {
 		List<String> patterns = new ArrayList<>();
-		//
 		patterns.add("http://blog.csdn.net/u014663710/article/details/\\d+");
 		patterns.add("http://blog.csdn.net/u014663710/article/category/\\d+(/\\d+)?");
 		patterns.add("http://blog.csdn.net/u014663710/article/list/\\d+");

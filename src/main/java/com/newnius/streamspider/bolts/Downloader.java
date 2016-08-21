@@ -2,6 +2,13 @@ package com.newnius.streamspider.bolts;
 
 import java.util.Map;
 
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.IRichBolt;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,13 +16,6 @@ import com.newnius.streamspider.util.CRErrorCode;
 import com.newnius.streamspider.util.CRMsg;
 import com.newnius.streamspider.util.CRSpider;
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.IRichBolt;
-import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 
 public class Downloader implements IRichBolt {
 
@@ -41,7 +41,7 @@ public class Downloader implements IRichBolt {
 		CRMsg msg = spider.doGet();
 		if (msg.getCode() == CRErrorCode.SUCCESS) {
 			String html = msg.get("response");
-			logger.info("Downloaded " + url);
+			logger.info("Downloaded url " + url);
 			collector.emit("html", new Values(url, html));
 		} else {
 			logger.info(msg.getMessage());

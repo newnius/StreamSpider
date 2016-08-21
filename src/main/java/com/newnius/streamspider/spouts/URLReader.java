@@ -2,19 +2,17 @@ package com.newnius.streamspider.spouts;
 
 import java.util.Map;
 
+import org.apache.storm.spout.SpoutOutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.IRichSpout;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.newnius.streamspider.SpiderConfig;
-import com.newnius.streamspider.model.UrlPatternFactory;
 import com.newnius.streamspider.util.JedisDAO;
 
-import backtype.storm.spout.SpoutOutputCollector;
-import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.IRichSpout;
-import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Values;
 import redis.clients.jedis.Jedis;
 
 public class URLReader implements IRichSpout {
@@ -55,6 +53,7 @@ public class URLReader implements IRichSpout {
 		if (System.currentTimeMillis() < freezeTime) {
 			try {
 				Thread.sleep(50);
+				return;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -64,18 +63,7 @@ public class URLReader implements IRichSpout {
 		String url = jedis.rpop("urls_to_download");
 		if (url != null) {
 			logger.info("emit " + url);
-
-			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
-			if (pattern != null) {
-				long count = jedis.incr("url_pattern_download_count_" + pattern);
-				if (count == 1) {
-					jedis.expire("url_pattern_download_count_" + pattern,
-							SpiderConfig.DEFAULT_LIMITATION_RESET_INTERVAL);
-				}
-			}
-
 			collector.emit("url", new Values(url));
-
 		} else {
 			try {
 				// logger.info("no more url, wait.");
