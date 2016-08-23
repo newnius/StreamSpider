@@ -22,14 +22,20 @@ Spider based on storm platform
 
 ## Topology
   There are one spout(`URLReader`) and five bolts in these topology. Bolts include `URLFilter`, `Downloader`, `HTMLParser`, `HTMLSaver`, `URLSaver`
+
 #### URLReader:  Pop from redis waiting list to get urls
+
 #### URLFilter:  Determine Which url will be downloaded.
  This bolt is the controller, in charge of :
  - Handle repeated urls
  - Pattern download count, ignore limitation exceeded pattern.
+
 #### Downloader: Download url
+
 #### HTMLParser: Parse urls from the page
+
 #### HTMLSaver : Save page html to mongodb
+
 #### URLSaver  : Push possible urls to redis waiting list
 
 
