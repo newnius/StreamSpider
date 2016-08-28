@@ -64,7 +64,7 @@ public class UrlPatternFactory {
 
 	private static void fetchAllPatterns() {
 		Jedis jedis = JedisDAO.getInstance();
-		patterns = jedis.zrange("allowed_url_patterns", 0, -1);
+		patterns = jedis.zrevrangeByScore("allowed_url_patterns", SpiderConfig.PRIORITY_HIGHEST, SpiderConfig.PRIORITY_LOWEST);
 		for (String pattern : patterns) {
 			logger.info("Load pattern " + pattern);
 		}

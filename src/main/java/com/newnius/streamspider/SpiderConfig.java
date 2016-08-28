@@ -4,15 +4,15 @@ public class SpiderConfig {
 	public static final String TOPOLOGY_NAME = "StreamSpider";
 
 	public static String redis_host = "172.18.0.10";
-	
-	//public static String redis_host = "192.168.56.110";
+
+	// public static String redis_host = "192.168.56.110";
 
 	public static int redis_port = 6379;
 
-	//public static String mongodb_host = "192.168.56.110";
+	// public static String mongodb_host = "192.168.56.110";
 
 	public static String mongodb_host = "172.18.0.8";
-	
+
 	public static int mongodb_port = 27017;
 
 	public static final String PATTERN_URL = "https?://\\S+";// "https?://[-_/:.a-zA-Z0-9]+";
@@ -26,5 +26,9 @@ public class SpiderConfig {
 	public static final int DEFAULT_LIMITATION = -1;
 
 	public static final int DEFAULT_FREQUENCY = 10 * 60;// ;1 * 60 * 60;
+
+	public static final int PRIORITY_LOWEST = 1;
+
+	public static final int PRIORITY_HIGHEST = 5;
 
 }

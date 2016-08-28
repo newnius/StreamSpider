@@ -42,7 +42,7 @@ Spider based on storm platform
 ## Configuration
   There something  to (or can to be) configured
    - **urls_to_download** (Redis list, required ) : waiting list, absolute url path.
-   - **allowed_url_patterns** (Redis sorted list, required, priority from low score to high score): allowed url patterns to be downloaded
+   - **allowed_url_patterns** (Redis sorted list, required, priority from highest score(5) to lowest score(1), zrevrangeBYScore): allowed url patterns to be downloaded
    - **url_pattern_setting_{pattern}** (Redis hash, optional) :
     - **limitation**: download count limitation in an interval
     - **frequency**: cache time, rescrap when expires
