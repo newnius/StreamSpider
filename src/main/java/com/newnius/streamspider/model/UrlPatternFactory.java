@@ -1,7 +1,5 @@
 package com.newnius.streamspider.model;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -41,7 +39,7 @@ public class UrlPatternFactory {
 	
 	public static UrlPatternSetting getPatternSetting(String pattern) {
 		logger.info("getPatternSetting url_pattern_setting_" + pattern);
-		Jedis jedis = JedisDAO.getInstance();
+		Jedis jedis = JedisDAO.instance();
 		Map<String, String> pairs = jedis.hgetAll("url_pattern_setting_" + pattern);
 
 		for (Entry<String, String> entry : pairs.entrySet()) {
@@ -50,20 +48,13 @@ public class UrlPatternFactory {
 
 		int frequency = StringConverter.string2int(pairs.get("frequency"), SpiderConfig.DEFAULT_FREQUENCY);
 		int limitation = StringConverter.string2int(pairs.get("limitation"), SpiderConfig.DEFAULT_LIMITATION);
-		String patterns2followStr = pairs.get("patterns2follow");
-		if (patterns2followStr == null) {
-			patterns2followStr = SpiderConfig.PATTERN_URL;
-		}
-
-		String[] tmp = patterns2followStr.split(",");
-		List<String> patterns2follow = Arrays.asList(tmp);
-		UrlPatternSetting patternSetting = new UrlPatternSetting(pattern, frequency, limitation,patterns2follow);
+		UrlPatternSetting patternSetting = new UrlPatternSetting(pattern, frequency, limitation);
 		jedis.close();
 		return patternSetting;
 	}
 
 	private static void fetchAllPatterns() {
-		Jedis jedis = JedisDAO.getInstance();
+		Jedis jedis = JedisDAO.instance();
 		patterns = jedis.zrevrangeByScore("allowed_url_patterns", SpiderConfig.PRIORITY_HIGHEST, SpiderConfig.PRIORITY_LOWEST);
 		for (String pattern : patterns) {
 			logger.info("Load pattern " + pattern);

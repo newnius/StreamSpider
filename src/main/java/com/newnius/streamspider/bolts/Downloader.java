@@ -41,10 +41,10 @@ public class Downloader implements IRichBolt {
 		CRMsg msg = spider.doGet();
 		if (msg.getCode() == CRErrorCode.SUCCESS) {
 			String html = msg.get("response");
-			logger.info("Downloaded url " + url);
+			logger.info("Downloaded: " + url);
 			collector.emit("html", new Values(url, html));
 		} else {
-			logger.info(msg.getMessage());
+			logger.warn(msg.getMessage());
 		}
 		collector.ack(input);
 	}

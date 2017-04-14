@@ -2,6 +2,8 @@ package com.newnius.streamspider.spouts;
 
 import java.util.Map;
 
+import com.newnius.streamspider.util.CRObject;
+import com.newnius.streamspider.util.JedisDAO;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichSpout;
@@ -10,9 +12,6 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.newnius.streamspider.util.JedisDAO;
-
 import redis.clients.jedis.Jedis;
 
 public class URLReader implements IRichSpout {
@@ -24,13 +23,16 @@ public class URLReader implements IRichSpout {
 
 	private SpoutOutputCollector collector;
 	private Logger logger;
-	private long freezeTime = 0;
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
 		this.collector = collector;
 		this.logger = LoggerFactory.getLogger(URLReader.class);
+		CRObject config = new CRObject();
+		config.set("REDIS_HOST", conf.get("REDIS_HOST").toString());
+		config.set("REDIS_PORT", Integer.parseInt(conf.get("REDIS_PORT").toString()));
+		JedisDAO.configure(config);
 	}
 
 	@Override
@@ -50,16 +52,7 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void nextTuple() {
-		if (System.currentTimeMillis() < freezeTime) {
-			try {
-				Thread.sleep(50);
-				return;
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		Jedis jedis = JedisDAO.getInstance();
+		Jedis jedis = JedisDAO.instance();
 		String url = jedis.rpop("urls_to_download");
 		if (url != null) {
 			logger.info("emit " + url);
@@ -77,15 +70,15 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void ack(Object msgId) {
-		logger.info("ack " + (String) msgId);
+		logger.info("ack " + msgId);
 	}
 
 	@Override
 	public void fail(Object msgId) {
-		Jedis jedis = JedisDAO.getInstance();
+		Jedis jedis = JedisDAO.instance();
 		jedis.lpush("urls_to_download", (String) msgId);
-		logger.info("fail " + (String) msgId);
-		freezeTime = System.currentTimeMillis() + 300;
+		jedis.close();
+		logger.info("fail " + msgId);
 	}
 
 	@Override

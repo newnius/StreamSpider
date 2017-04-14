@@ -3,6 +3,7 @@ package com.newnius.streamspider.bolts;
 import java.util.Map;
 import java.util.Set;
 
+import com.newnius.streamspider.util.CRObject;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -27,16 +28,20 @@ public class URLSaver implements IRichBolt {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 		this.logger = LoggerFactory.getLogger(getClass());
+		CRObject config = new CRObject();
+		config.set("REDIS_HOST", conf.get("REDIS_HOST").toString());
+		config.set("REDIS_PORT", Integer.parseInt(conf.get("REDIS_PORT").toString()));
+		JedisDAO.configure(config);
 	}
 
 	@Override
 	public void execute(Tuple input) {
 		@SuppressWarnings("unchecked")
 		Set<String> urls = (Set<String>) input.getValueByField("urls");
-		Jedis jedis = JedisDAO.getInstance();
+		Jedis jedis = JedisDAO.instance();
 		for (String url : urls) {
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
 			if (pattern != null) {

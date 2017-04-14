@@ -2,6 +2,7 @@ package com.newnius.streamspider.bolts;
 
 import java.util.Map;
 
+import com.newnius.streamspider.util.CRObject;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -12,7 +13,6 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.newnius.streamspider.SpiderConfig;
 import com.newnius.streamspider.model.UrlPatternFactory;
 import com.newnius.streamspider.model.UrlPatternSetting;
 import com.newnius.streamspider.util.JedisDAO;
@@ -36,22 +36,24 @@ public class URLFilter implements IRichBolt {
 	@Override
 	public void execute(Tuple tuple) {
 		String url = tuple.getStringByField("url");
-		Jedis jedis = JedisDAO.getInstance();
+		Jedis jedis = JedisDAO.instance();
 		String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
 		if (pattern != null) {/* in allowed url_patterns */
 			UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
-			int expireTime = patternSetting.getFrequency();
+			int expireTime = patternSetting.getExpire();
 			long count = StringConverter.string2int(jedis.get("url_pattern_download_count_" + pattern), 0);
 			if (count < patternSetting.getLimitation() || patternSetting.getLimitation() == -1) {
-				String res = jedis.set("up_to_date_" + url, url, "NX", "EX", expireTime);
+				String res = jedis.set("up_to_date_" + url, "1", "NX", "EX", expireTime);
 				if (res != null) { // this url is not up_to_date or never downloaded
 					collector.emit("filtered-url", new Values(url));
 					logger.info("emit filtered url " + url);
 					jedis.incr("url_pattern_download_count_" + pattern);
 				}
 				if (count == 0) {// set expire time if not set
-					jedis.expire("url_pattern_download_count_" + pattern, SpiderConfig.LIMITATION_RESET_INTERVAL);
+					jedis.expire("url_pattern_download_count_" + pattern, patternSetting.getInterval());
 				}
+			}else{
+				jedis.lpush("urls_to_download", url);
 			}
 		}
 		jedis.close();
@@ -60,9 +62,13 @@ public class URLFilter implements IRichBolt {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void prepare(Map config, TopologyContext context, OutputCollector collector) {
+	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
 		this.logger = LoggerFactory.getLogger(getClass());
 		this.collector = collector;
+		CRObject config = new CRObject();
+		config.set("REDIS_HOST", conf.get("REDIS_HOST").toString());
+		config.set("REDIS_PORT", Integer.parseInt(conf.get("REDIS_PORT").toString()));
+		JedisDAO.configure(config);
 	}
 
 	@Override

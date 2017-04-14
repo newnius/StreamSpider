@@ -1,48 +1,47 @@
 package com.newnius.streamspider.model;
 
-import java.util.List;
 
 public class UrlPatternSetting {
 	private String pattern;
-	private int frequency;
+	private int expire;
 	private int limitation;
-	private List<String> patterns2follow;
+	private int interval = 5 * 60;
 	
-	public UrlPatternSetting(String pattern, int frequency, int limitation, List<String> patterns2follow) {
-		super();
+	public UrlPatternSetting(String pattern, int expire, int limitation) {
 		this.pattern = pattern;
-		this.frequency = frequency;
+		this.expire = expire;
 		this.limitation = limitation;
-		this.patterns2follow = patterns2follow;
 	}
+
 	public String getPattern() {
 		return pattern;
 	}
+
 	public void setPattern(String pattern) {
 		this.pattern = pattern;
 	}
-	public int getFrequency() {
-		return frequency;
+
+	public int getExpire() {
+		return expire;
 	}
-	public void setFrequency(int frequency) {
-		this.frequency = frequency;
+
+	public void setExpire(int expire) {
+		this.expire = expire;
 	}
-	public List<String> getPatterns2follow() {
-		return patterns2follow;
-	}
-	public void setPatterns2follow(List<String> patterns2follow) {
-		this.patterns2follow = patterns2follow;
-	}
+
 	public int getLimitation() {
 		return limitation;
 	}
+
 	public void setLimitation(int limitation) {
 		this.limitation = limitation;
 	}
-	
-	
-	
-	
-	
-	
+
+	public int getInterval() {
+		return interval;
+	}
+
+	public void setInterval(int interval) {
+		this.interval = interval;
+	}
 }

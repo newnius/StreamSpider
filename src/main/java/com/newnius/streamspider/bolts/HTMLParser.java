@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.newnius.streamspider.util.CRObject;
+import com.newnius.streamspider.util.JedisDAO;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -35,9 +37,13 @@ public class HTMLParser implements IRichBolt {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 		this.logger = LoggerFactory.getLogger(getClass());
+		CRObject config = new CRObject();
+		config.set("REDIS_HOST", conf.get("REDIS_HOST").toString());
+		config.set("REDIS_PORT", Integer.parseInt(conf.get("REDIS_PORT").toString()));
+		JedisDAO.configure(config);
 	}
 
 	@Override
@@ -55,39 +61,29 @@ public class HTMLParser implements IRichBolt {
 		
 		String relatedPattern = UrlPatternFactory.getRelatedUrlPattern(url);
 		if (relatedPattern != null) {
-			Set<String> urls = new TreeSet<>();	
-			List<String> patterns = UrlPatternFactory.getPatternSetting(relatedPattern).getPatterns2follow();
+			Set<String> urls = new TreeSet<>();
+			Set<String> patterns = UrlPatternFactory.getAllPatterns();
 			for (String pattern : patterns) {
-				logger.info("use pattern " + pattern);
 				for (String possibleUrl : possibleUrls) {
 					try {
-						if (possibleUrl.contains("(")) {
-							continue;// ignore javascript:foo(bar)
+						URL absoluteUrl = new URL(new URL(url), possibleUrl);
+						String newUrl = absoluteUrl.getProtocol()+"://"+absoluteUrl.getHost();
+						if(absoluteUrl.getPort() != -1){
+							newUrl += ":"+absoluteUrl.getPort();
 						}
-						String absoluteUrl = new URL(new URL(url), possibleUrl).toString();
-						if (absoluteUrl.matches(pattern)) {
-							urls.add(absoluteUrl);
-							logger.info("new url " + absoluteUrl);
+						newUrl += absoluteUrl.getFile();
+						if (newUrl.matches(pattern)) {
+							urls.add(newUrl);
+							logger.info("new url " + newUrl);
 						}
 					} catch (MalformedURLException e) {
-						e.printStackTrace();
+						//e.printStackTrace();
 					}
 				}
 			}
 			collector.emit("urls", new Values(urls));
 		}
 		collector.ack(input);
-	}
-
-	
-	/* patterns 4 test */
-	private List<String> getPatterns() {
-		List<String> patterns = new ArrayList<>();
-		patterns.add("http://blog.csdn.net/u014663710/article/details/\\d+");
-		patterns.add("http://blog.csdn.net/u014663710/article/category/\\d+(/\\d+)?");
-		patterns.add("http://blog.csdn.net/u014663710/article/list/\\d+");
-		patterns.add("http://blog.csdn.net/u014663710");
-		return patterns;
 	}
 
 	@Override

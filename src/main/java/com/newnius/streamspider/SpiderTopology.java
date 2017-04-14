@@ -14,13 +14,21 @@ import com.newnius.streamspider.spouts.URLReader;
 public class SpiderTopology {
 	public static void main(String[] args) {
 		Config conf = new Config();
+		conf.put("REDIS_HOST", "ss-redis");
+		conf.put("REDIS_PORT", "6379");
+		conf.put("MQ_HOST", "");
+		conf.put("MQ_TOPIC", "");
+
+		conf.setMaxSpoutPending(5000);
+		conf.setNumWorkers(4);
 
 		int url_reader_parallelism = 1;
 		int url_filter_parallelism = 1;
-		int downloader_parallelism = 5;
+		int downloader_parallelism = 10;
 		int html_saver_parallelism = 1;
 		int html_parser_parallelism = 1;
 		int url_saver_parallelism = 1;
+
 
 		TopologyBuilder builder = new TopologyBuilder();
 
@@ -33,7 +41,7 @@ public class SpiderTopology {
 
 		builder.setBolt("html-parser", new HTMLParser(), html_parser_parallelism).shuffleGrouping("downloader", "html");
 
-		builder.setBolt("html-saver", new HTMLSaver(), html_saver_parallelism).shuffleGrouping("downloader", "html");
+		//builder.setBolt("html-saver", new HTMLSaver(), html_saver_parallelism).shuffleGrouping("downloader", "html");
 
 		builder.setBolt("url-saver", new URLSaver(), url_saver_parallelism).shuffleGrouping("html-parser", "urls");
 

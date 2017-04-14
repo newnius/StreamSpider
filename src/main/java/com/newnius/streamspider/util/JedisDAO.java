@@ -1,14 +1,23 @@
 package com.newnius.streamspider.util;
 
-import com.newnius.streamspider.SpiderConfig;
-
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
 public class JedisDAO {
+	private Jedis jedis;
+	private static String host;
+	private static int port;
+
+	public static void configure(CRObject config){
+		host = config.get("REDIS_HOST");
+		port = config.getInt("REDIS_PORT");
+	}
+
+	public static Jedis instance() {
+		return new Jedis(host, port);
+	}
+
+	/*
 	private static JedisPool pool;
-	static {
 		JedisPoolConfig config = new JedisPoolConfig();
 		config.setMaxTotal(32);
 		config.setMaxIdle(10);
@@ -22,12 +31,6 @@ public class JedisDAO {
 		config.setTestWhileIdle(false);
 		config.setTimeBetweenEvictionRunsMillis(60000);// 一分钟
 		// config.setBlockWhenExhausted(true);
-		pool = new JedisPool(config, SpiderConfig.redis_host, SpiderConfig.redis_port);
-	}
-
-	public static Jedis getInstance() {
-		Jedis client = pool.getResource();// 从pool中获取资源
-		return client;
-	}
+	*/
 
 }
