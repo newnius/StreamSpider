@@ -1,5 +1,7 @@
 package com.newnius.streamspider.bolts;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Map;
 
 import org.apache.storm.task.OutputCollector;
@@ -38,6 +40,11 @@ public class Downloader implements IRichBolt {
 		String url = input.getStringByField("url");
 
 		CRSpider spider = new CRSpider(url);
+
+		//Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("176.93.133.144", 8080));
+		Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("ss-proxy", 7001));
+		spider.setProxy(proxy);
+
 		CRMsg msg = spider.doGet();
 		if (msg.getCode() == CRErrorCode.SUCCESS) {
 			String html = msg.get("response");

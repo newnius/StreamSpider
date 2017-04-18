@@ -9,6 +9,7 @@ import com.newnius.streamspider.bolts.URLParser;
 import com.newnius.streamspider.bolts.URLFilter;
 import com.newnius.streamspider.bolts.URLSaver;
 import com.newnius.streamspider.spouts.URLReader;
+import org.apache.storm.tuple.Fields;
 
 public class SpiderTopology {
 	public static void main(String[] args) {
@@ -22,7 +23,7 @@ public class SpiderTopology {
 		conf.setNumWorkers(4);
 
 		int url_reader_parallelism = 1;
-		int url_filter_parallelism = 1;
+		int url_filter_parallelism = 2;
 		int downloader_parallelism = 10;
 		int html_saver_parallelism = 1;
 		int html_parser_parallelism = 1;
@@ -35,8 +36,9 @@ public class SpiderTopology {
 
 		builder.setBolt("url-filter", new URLFilter(), url_filter_parallelism).shuffleGrouping("url-reader", "url");
 
-		builder.setBolt("downloader", new Downloader(), downloader_parallelism).shuffleGrouping("url-filter",
-				"filtered-url");
+		builder.setBolt("downloader", new Downloader(), downloader_parallelism).fieldsGrouping("url-filter", "filtered-url", new Fields("pattern"));
+
+		//builder.setBolt("downloader", new Downloader(), downloader_parallelism).shuffleGrouping("url-filter", "filtered-url");
 
 		builder.setBolt("url-parser", new URLParser(), html_parser_parallelism).shuffleGrouping("downloader", "html");
 

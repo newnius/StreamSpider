@@ -4,3 +4,4 @@ target/
 .idea/
 .settings/
 StreamSpider.iml
+*.swp

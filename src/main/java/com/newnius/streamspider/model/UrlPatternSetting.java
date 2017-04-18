@@ -5,11 +5,13 @@ public class UrlPatternSetting {
 	private int expire;
 	private int limitation;
 	private int interval;
+	private int parallelism;
 	
-	public UrlPatternSetting(int expire, int limitation, int interval) {
+	public UrlPatternSetting(int expire, int limitation, int interval, int parallelism) {
 		this.expire = expire;
 		this.limitation = limitation;
 		this.interval = interval;
+		this.parallelism = parallelism;
 	}
 
 	public int getExpire() {
@@ -34,5 +36,13 @@ public class UrlPatternSetting {
 
 	public void setInterval(int interval) {
 		this.interval = interval;
+	}
+
+	public int getParallelism() {
+		return parallelism;
+	}
+
+	public void setParallelism(int parallelism) {
+		this.parallelism = parallelism;
 	}
 }

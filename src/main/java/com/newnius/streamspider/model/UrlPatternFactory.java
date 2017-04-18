@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.sun.deploy.net.proxy.pac.PACFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +47,12 @@ public class UrlPatternFactory {
 			logger.info("Pattern setting: " + entry.getKey() + "=>" + entry.getValue());
 		}
 
-		int frequency = StringConverter.string2int(pairs.get("frequency"), SpiderConfig.DEFAULT_FREQUENCY);
+		int frequency = StringConverter.string2int(pairs.get("frequency"), SpiderConfig.DEFAULT_EXPIRE_SECOND);
 		int limitation = StringConverter.string2int(pairs.get("limitation"), SpiderConfig.DEFAULT_LIMITATION);
 		int interval = StringConverter.string2int(pairs.get("interval"), SpiderConfig.DEFAULT_INTERVAL);
+		int parallelism = StringConverter.string2int(pairs.get("parallelism"), SpiderConfig.DAFAULT_PARALLELISM);
 
-		UrlPatternSetting patternSetting = new UrlPatternSetting(frequency, limitation, interval);
+		UrlPatternSetting patternSetting = new UrlPatternSetting(frequency, limitation, interval, parallelism);
 		jedis.close();
 		return patternSetting;
 	}

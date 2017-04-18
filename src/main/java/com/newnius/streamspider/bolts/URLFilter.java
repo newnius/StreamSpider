@@ -45,7 +45,7 @@ public class URLFilter implements IRichBolt {
 			if (count < patternSetting.getLimitation() || patternSetting.getLimitation() == -1) {
 				String res = jedis.set("up_to_date_" + url, "1", "NX", "EX", expireTime);
 				if (res != null) { // this url is not up_to_date or never downloaded
-					collector.emit("filtered-url", new Values(url));
+					collector.emit("filtered-url", new Values(pattern, url));
 					logger.info("emit filtered url " + url);
 					jedis.incr("url_pattern_download_count_" + pattern);
 				}
@@ -72,8 +72,8 @@ public class URLFilter implements IRichBolt {
 	}
 
 	@Override
-	public void declareOutputFields(OutputFieldsDeclarer outputDeclearer) {
-		outputDeclearer.declareStream("filtered-url", new Fields("url"));
+	public void declareOutputFields(OutputFieldsDeclarer outputDeclarer) {
+		outputDeclarer.declareStream("filtered-url", new Fields("pattern", "url"));
 
 	}
 

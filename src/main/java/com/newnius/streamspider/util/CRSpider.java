@@ -4,9 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.List;
 import java.util.Map;
 
@@ -80,6 +78,11 @@ public class CRSpider {
 	 */
 	private Map<String, List<String>> headers;
 
+	/*
+	*  optional
+	* */
+	private Proxy proxy;
+
 	public CRSpider(String urlStr) {
 		this.urlStr = urlStr;
 		logger = CRLogger.getLogger(TAG);
@@ -117,13 +120,23 @@ public class CRSpider {
 		}
 	}
 
+	public void setProxy(Proxy proxy) {
+		this.proxy = proxy;
+	}
+
 	public CRMsg doGet() {
 		try {
 			URL url = new URL(urlStr);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			HttpURLConnection conn;
+			if(proxy!=null) {
+				conn = (HttpURLConnection) url.openConnection(proxy);
+			}else {
+				conn = (HttpURLConnection) url.openConnection();
+			}
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
+
 			if (cookie != null)
 				conn.setRequestProperty("Cookie", cookie);
 			conn.setRequestProperty("User-Agent", userAgent);

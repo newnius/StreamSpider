@@ -44,7 +44,7 @@ public class URLSaver implements IRichBolt {
 		Jedis jedis = JedisDAO.instance();
 		for (String url : urls) {
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
-			if (pattern != null) {
+			if (pattern != null && !jedis.exists("up_to_date_" + url)) {
 				jedis.lpush("urls_to_download", url);
 				logger.info("push url " + url);
 			}

@@ -14,7 +14,7 @@ Spider based on storm platform
 
 #### Customize scrap strategy of certain pattern
   - limitation
-  - patterns2follow
+  - reset interval
   - expire time
 
 #### Update settings dynamically
@@ -32,9 +32,9 @@ Spider based on storm platform
 
 #### Downloader: Download url
 
-#### HTMLParser: Parse urls from the page
+#### URLParser: Parse urls from the page
 
-#### HTMLSaver : Save page html to mongodb
+#### HTMLSaver : Save page html to MQ
 
 #### URLSaver  : Push possible urls to redis waiting list
 
@@ -44,12 +44,10 @@ Spider based on storm platform
    - **urls_to_download** (Redis list, required ) : waiting list, absolute url path.
    - **allowed_url_patterns** (Redis sorted list, required, priority from highest score(5) to lowest score(1), zrevrangeBYScore): allowed url patterns to be downloaded
    - **url_pattern_setting_{pattern}** (Redis hash, optional) :
+    
     - **limitation**: download count limitation in an interval
-    - **expire**: cache time, rescrap when expires
-    - **patterns2follow**: which patterns to follow. In the form of pattern1,pattern2,..., default is .*
+    - **interval**: duration to reset count
+    - **expire**: cache time
 
 
 ## TODO
-   - [ ] proxy support
-   - [ ] refetch after expires
-   - [ ] more
