@@ -2,23 +2,14 @@ package com.newnius.streamspider.model;
 
 
 public class UrlPatternSetting {
-	private String pattern;
 	private int expire;
 	private int limitation;
-	private int interval = 5 * 60;
+	private int interval;
 	
-	public UrlPatternSetting(String pattern, int expire, int limitation) {
-		this.pattern = pattern;
+	public UrlPatternSetting(int expire, int limitation, int interval) {
 		this.expire = expire;
 		this.limitation = limitation;
-	}
-
-	public String getPattern() {
-		return pattern;
-	}
-
-	public void setPattern(String pattern) {
-		this.pattern = pattern;
+		this.interval = interval;
 	}
 
 	public int getExpire() {

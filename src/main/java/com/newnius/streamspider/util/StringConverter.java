@@ -19,6 +19,7 @@ public class StringConverter {
 
 	public static Integer string2int(String s) {
 		try {
+			if(s==null)return null;
 			return Integer.parseInt(s);
 		} catch (Exception ex) {
 			logger.warn("Can not convert " + s + " to int." + ex.getMessage());

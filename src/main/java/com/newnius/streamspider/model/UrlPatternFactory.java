@@ -36,7 +36,7 @@ public class UrlPatternFactory {
 		return null;
 	}
 
-	
+
 	public static UrlPatternSetting getPatternSetting(String pattern) {
 		logger.info("getPatternSetting url_pattern_setting_" + pattern);
 		Jedis jedis = JedisDAO.instance();
@@ -48,7 +48,9 @@ public class UrlPatternFactory {
 
 		int frequency = StringConverter.string2int(pairs.get("frequency"), SpiderConfig.DEFAULT_FREQUENCY);
 		int limitation = StringConverter.string2int(pairs.get("limitation"), SpiderConfig.DEFAULT_LIMITATION);
-		UrlPatternSetting patternSetting = new UrlPatternSetting(pattern, frequency, limitation);
+		int interval = StringConverter.string2int(pairs.get("interval"), SpiderConfig.DEFAULT_INTERVAL);
+
+		UrlPatternSetting patternSetting = new UrlPatternSetting(frequency, limitation, interval);
 		jedis.close();
 		return patternSetting;
 	}

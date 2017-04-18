@@ -5,8 +5,7 @@ import org.apache.storm.StormSubmitter;
 import org.apache.storm.topology.TopologyBuilder;
 
 import com.newnius.streamspider.bolts.Downloader;
-import com.newnius.streamspider.bolts.HTMLParser;
-import com.newnius.streamspider.bolts.HTMLSaver;
+import com.newnius.streamspider.bolts.URLParser;
 import com.newnius.streamspider.bolts.URLFilter;
 import com.newnius.streamspider.bolts.URLSaver;
 import com.newnius.streamspider.spouts.URLReader;
@@ -39,11 +38,11 @@ public class SpiderTopology {
 		builder.setBolt("downloader", new Downloader(), downloader_parallelism).shuffleGrouping("url-filter",
 				"filtered-url");
 
-		builder.setBolt("html-parser", new HTMLParser(), html_parser_parallelism).shuffleGrouping("downloader", "html");
+		builder.setBolt("url-parser", new URLParser(), html_parser_parallelism).shuffleGrouping("downloader", "html");
 
 		//builder.setBolt("html-saver", new HTMLSaver(), html_saver_parallelism).shuffleGrouping("downloader", "html");
 
-		builder.setBolt("url-saver", new URLSaver(), url_saver_parallelism).shuffleGrouping("html-parser", "urls");
+		builder.setBolt("url-saver", new URLSaver(), url_saver_parallelism).shuffleGrouping("url-parser", "urls");
 
 		String topologyName = SpiderConfig.TOPOLOGY_NAME;
 

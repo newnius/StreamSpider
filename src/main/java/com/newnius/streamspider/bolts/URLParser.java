@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.newnius.streamspider.model.UrlPatternFactory;
 
-public class HTMLParser implements IRichBolt {
+public class URLParser implements IRichBolt {
 
 	/**
 	 * 
