@@ -15,12 +15,14 @@ public class SpiderTopology {
 		conf.put("REDIS_PORT", "6379");
 		conf.put("MQ_HOST", "ss-rabbitmq");
 		conf.put("MQ_QUEUE", "stream-spider");
+		conf.put("PROXY_HOST","ss-proxy");
+		conf.put("PROXY_PORT","7001");
 
 		conf.setMaxSpoutPending(5000);
 		conf.setNumWorkers(4);
 
 		int url_reader_parallelism = 1;
-		int url_filter_parallelism = 2;
+		int url_filter_parallelism = 1;
 		int downloader_parallelism = 10;
 		int html_saver_parallelism = 1;
 		int html_parser_parallelism = 1;
@@ -34,8 +36,6 @@ public class SpiderTopology {
 		builder.setBolt("url-filter", new URLFilter(), url_filter_parallelism).shuffleGrouping("url-reader", "url");
 
 		builder.setBolt("downloader", new Downloader(), downloader_parallelism).fieldsGrouping("url-filter", "filtered-url", new Fields("pattern"));
-
-		//builder.setBolt("downloader", new Downloader(), downloader_parallelism).shuffleGrouping("url-filter", "filtered-url");
 
 		builder.setBolt("url-parser", new URLParser(), html_parser_parallelism).shuffleGrouping("downloader", "html");
 

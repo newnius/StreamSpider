@@ -59,8 +59,8 @@ public class URLParser implements IRichBolt {
 				newUrl += absoluteUrl.getFile();
 				collector.emit("url", new Values(newUrl));
 				logger.debug("new url " + newUrl);
-			} catch (MalformedURLException e) {
-				//e.printStackTrace();
+			} catch (MalformedURLException ex) {
+				logger.warn(ex.getMessage());
 			}
 		}
 		collector.ack(input);

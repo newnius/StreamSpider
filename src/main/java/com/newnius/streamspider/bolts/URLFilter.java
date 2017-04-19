@@ -1,7 +1,8 @@
 package com.newnius.streamspider.bolts;
 
+import java.net.URL;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.newnius.streamspider.util.CRObject;
 import org.apache.storm.task.OutputCollector;
@@ -36,38 +37,39 @@ public class URLFilter implements IRichBolt {
 
 	@Override
 	public void execute(Tuple tuple) {
-		try {
-			String url = tuple.getStringByField("url");
-			Jedis jedis = JedisDAO.instance();
-			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
-			if (pattern != null) {/* in allowed url_patterns */
-				UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
-				int expireTime = patternSetting.getExpire();
-				long count = StringConverter.string2int(jedis.get("url_pattern_download_count_" + pattern), 0);
-				if (count < patternSetting.getLimitation() || patternSetting.getLimitation() == -1) {
-					String res = jedis.set("up_to_date_" + url, "1", "NX", "EX", expireTime);
-					if (res != null) { // this url is not up_to_date or never downloaded
-						int no = new Random().nextInt() % patternSetting.getParallelism();
-						collector.emit("filtered-url", new Values(pattern+"."+no, url));
-						logger.debug("emit filtered url " + url);
-						jedis.incr("url_pattern_download_count_" + pattern);
-					}
-					if (count == 0) {// set expire time if not set
-						jedis.expire("url_pattern_download_count_" + pattern, patternSetting.getInterval());
-					}
-				} else {
-					if(!jedis.exists("up_to_date_" + url)) {
-						collector.emit("url", new Values(url));
-					}
-				}
-			}
-			jedis.close();
-			collector.ack(tuple);
-		}catch (Exception ex){
-			ex.printStackTrace();
-			collector.fail(tuple);
-		}
-	}
+        try (Jedis jedis = JedisDAO.instance()) {
+            String url = tuple.getStringByField("url");
+            String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
+            if (pattern == null) {
+                collector.ack(tuple);
+                return;
+            }
+            UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
+            int expireTime = patternSetting.getExpire();
+            String host = new URL(url).getHost();
+            long count = StringConverter.string2int(jedis.get("count_" + host), 0);
+            if (count < patternSetting.getLimitation() || patternSetting.getLimitation() == -1) {
+                String res = jedis.set("up_to_date_" + url, "1", "NX", "EX", expireTime);
+                if (res != null) { // this url is not up_to_date or never downloaded
+                    int no = ThreadLocalRandom.current().nextInt(0, patternSetting.getParallelism());
+                    collector.emit("filtered-url", new Values(pattern + "." + no, url));
+                    logger.debug("emit filtered url " + url);
+                    jedis.incr("count_" + host);
+                }
+                if (count == 0) {// set expire time if not set
+                    jedis.expire("count_" + host, patternSetting.getInterval());
+                }
+            } else {
+                if (!jedis.exists("up_to_date_" + url)) {
+                    collector.emit("url", new Values(url));
+                }
+            }
+            collector.ack(tuple);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            collector.fail(tuple);
+        }
+    }
 
 	@SuppressWarnings("rawtypes")
 	@Override

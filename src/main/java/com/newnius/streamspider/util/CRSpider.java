@@ -164,7 +164,7 @@ public class CRSpider {
 			return msg;
 		} catch (Exception ex) {
 			if (CRSpider.mode == CRSpider.DEVELOP_MODE) {
-				logger.error(ex);
+				logger.error(ex.getMessage());
 			}
 			return new CRMsg(CRErrorCode.FAIL, ex.getMessage());
 		}
@@ -179,7 +179,7 @@ public class CRSpider {
 			}
 		} catch (Exception ex) {
 			if (CRSpider.mode == CRSpider.DEVELOP_MODE) {
-				logger.error(ex);
+				logger.error(ex.getMessage());
 			}
 			return new CRMsg(CRErrorCode.FAIL, ex.getMessage());
 		}
@@ -226,7 +226,7 @@ public class CRSpider {
 			return msg;
 		} catch (Exception ex) {
 			if (CRSpider.mode == CRSpider.DEVELOP_MODE) {
-				logger.error(ex);
+				logger.error(ex.getMessage());
 			}
 			return new CRMsg(CRErrorCode.FAIL, ex.getMessage());
 		}

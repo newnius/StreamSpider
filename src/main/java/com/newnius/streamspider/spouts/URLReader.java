@@ -65,7 +65,7 @@ public class URLReader implements IRichSpout {
 			collector.emit("url", new Values(url));
 		} else {
 			try {
-				// logger.info("no more url, wait.");
+				logger.debug("no more url, wait.");
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
