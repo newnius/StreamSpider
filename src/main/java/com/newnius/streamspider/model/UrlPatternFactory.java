@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.sun.deploy.net.proxy.pac.PACFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,20 +38,20 @@ public class UrlPatternFactory {
 
 
 	public static UrlPatternSetting getPatternSetting(String pattern) {
-		logger.info("getPatternSetting url_pattern_setting_" + pattern);
+		logger.debug("getPatternSetting url_pattern_setting_" + pattern);
 		Jedis jedis = JedisDAO.instance();
 		Map<String, String> pairs = jedis.hgetAll("url_pattern_setting_" + pattern);
 
 		for (Entry<String, String> entry : pairs.entrySet()) {
-			logger.info("Pattern setting: " + entry.getKey() + "=>" + entry.getValue());
+			logger.debug("Pattern setting: " + entry.getKey() + "=>" + entry.getValue());
 		}
 
-		int frequency = StringConverter.string2int(pairs.get("frequency"), SpiderConfig.DEFAULT_EXPIRE_SECOND);
+		int expire = StringConverter.string2int(pairs.get("expire"), SpiderConfig.DEFAULT_EXPIRE_SECOND);
 		int limitation = StringConverter.string2int(pairs.get("limitation"), SpiderConfig.DEFAULT_LIMITATION);
 		int interval = StringConverter.string2int(pairs.get("interval"), SpiderConfig.DEFAULT_INTERVAL);
 		int parallelism = StringConverter.string2int(pairs.get("parallelism"), SpiderConfig.DAFAULT_PARALLELISM);
 
-		UrlPatternSetting patternSetting = new UrlPatternSetting(frequency, limitation, interval, parallelism);
+		UrlPatternSetting patternSetting = new UrlPatternSetting(expire, limitation, interval, parallelism);
 		jedis.close();
 		return patternSetting;
 	}

@@ -48,7 +48,7 @@ public class Downloader implements IRichBolt {
 		CRMsg msg = spider.doGet();
 		if (msg.getCode() == CRErrorCode.SUCCESS) {
 			String html = msg.get("response");
-			logger.info("Downloaded: " + url);
+			logger.debug("Downloaded: " + url);
 			collector.emit("html", new Values(url, html));
 		} else {
 			logger.warn(msg.getMessage());

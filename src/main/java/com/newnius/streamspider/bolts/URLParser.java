@@ -2,11 +2,7 @@ package com.newnius.streamspider.bolts;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import com.newnius.streamspider.util.CRObject;
 import com.newnius.streamspider.util.JedisDAO;
@@ -23,8 +19,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.newnius.streamspider.model.UrlPatternFactory;
 
 public class URLParser implements IRichBolt {
 
@@ -54,34 +48,20 @@ public class URLParser implements IRichBolt {
 		/* get all links as possible urls */
 		Document doc = Jsoup.parse(html);
 		Elements links = doc.select("a");
-		List<String> possibleUrls = new ArrayList<>();
 		for (Element link : links) {
-			possibleUrls.add(link.attr("href"));
-		}
-		
-		String relatedPattern = UrlPatternFactory.getRelatedUrlPattern(url);
-		if (relatedPattern != null) {
-			Set<String> urls = new TreeSet<>();
-			Set<String> patterns = UrlPatternFactory.getAllPatterns();
-			for (String pattern : patterns) {
-				for (String possibleUrl : possibleUrls) {
-					try {
-						URL absoluteUrl = new URL(new URL(url), possibleUrl);
-						String newUrl = absoluteUrl.getProtocol()+"://"+absoluteUrl.getHost();
-						if(absoluteUrl.getPort() != -1){
-							newUrl += ":"+absoluteUrl.getPort();
-						}
-						newUrl += absoluteUrl.getFile();
-						if (newUrl.matches(pattern)) {
-							urls.add(newUrl);
-							logger.info("new url " + newUrl);
-						}
-					} catch (MalformedURLException e) {
-						//e.printStackTrace();
-					}
+			String possibleUrl = link.attr("href");
+			try {
+				URL absoluteUrl = new URL(new URL(url), possibleUrl);
+				String newUrl = absoluteUrl.getProtocol()+"://"+absoluteUrl.getHost();
+				if(absoluteUrl.getPort() != -1){
+					newUrl += ":"+absoluteUrl.getPort();
 				}
+				newUrl += absoluteUrl.getFile();
+				collector.emit("url", new Values(newUrl));
+				logger.debug("new url " + newUrl);
+			} catch (MalformedURLException e) {
+				//e.printStackTrace();
 			}
-			collector.emit("urls", new Values(urls));
 		}
 		collector.ack(input);
 	}
@@ -93,7 +73,7 @@ public class URLParser implements IRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declareStream("urls", new Fields("urls"));
+		declarer.declareStream("url", new Fields("url"));
 	}
 
 	@Override

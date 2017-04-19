@@ -39,15 +39,12 @@ public class URLSaver implements IRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
-		@SuppressWarnings("unchecked")
-		Set<String> urls = (Set<String>) input.getValueByField("urls");
+		String url = (String) input.getValueByField("url");
 		Jedis jedis = JedisDAO.instance();
-		for (String url : urls) {
-			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
-			if (pattern != null && !jedis.exists("up_to_date_" + url)) {
-				jedis.lpush("urls_to_download", url);
-				logger.info("push url " + url);
-			}
+		String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
+		if (pattern != null && !jedis.exists("up_to_date_" + url)) {
+			jedis.lpush("urls_to_download", url);
+			logger.debug("push url " + url);
 		}
 		jedis.close();
 		collector.ack(input);

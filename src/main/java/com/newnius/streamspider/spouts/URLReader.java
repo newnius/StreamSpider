@@ -52,10 +52,16 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void nextTuple() {
-		Jedis jedis = JedisDAO.instance();
-		String url = jedis.rpop("urls_to_download");
+		String url = null;
+		try {
+			Jedis jedis = JedisDAO.instance();
+			url = jedis.rpop("urls_to_download");
+			jedis.close();
+		}catch (Exception ex){
+			ex.printStackTrace();
+		}
 		if (url != null) {
-			logger.info("emit " + url);
+			logger.debug("emit " + url);
 			collector.emit("url", new Values(url));
 		} else {
 			try {
@@ -65,7 +71,6 @@ public class URLReader implements IRichSpout {
 				e.printStackTrace();
 			}
 		}
-		jedis.close();
 	}
 
 	@Override
@@ -75,10 +80,14 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void fail(Object msgId) {
-		Jedis jedis = JedisDAO.instance();
-		jedis.lpush("urls_to_download", (String) msgId);
-		jedis.close();
-		logger.info("fail " + msgId);
+		try {
+			Jedis jedis = JedisDAO.instance();
+			jedis.lpush("urls_to_download", (String) msgId);
+			jedis.close();
+			logger.warn("fail " + msgId);
+		}catch (Exception ex){
+			ex.printStackTrace();
+		}
 	}
 
 	@Override
