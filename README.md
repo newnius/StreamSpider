@@ -4,7 +4,7 @@ Spider based on storm platform
 ## Environment
   - [Apache Storm](https://github.com/apache/storm)
   - [Redis](https://github.com/antirez/redis)
-  - [Mongo](https://github.com/mongodb/mongo)
+  - [RabbitMQ](https://github.com/rabbitmq/rabbitmq-server)
 
 ## Features
 
@@ -16,6 +16,7 @@ Spider based on storm platform
   - limitation
   - reset interval
   - expire time
+  - parallelism
 
 #### Update settings dynamically
   System will refetch settings after a certain time (cache), so it is possible to update settings dynamically.
@@ -41,13 +42,15 @@ Spider based on storm platform
 
 ## Configuration
   There something  to (or can to be) configured
-   - **urls_to_download** (Redis list, required ) : waiting list, absolute url path.
-   - **allowed_url_patterns** (Redis sorted list, required, priority from highest score(5) to lowest score(1), zrevrangeBYScore): allowed url patterns to be downloaded
-   - **url_pattern_setting_{pattern}** (Redis hash, optional) :
-    
+
+### **urls_to_download** (Redis list, required ) : waiting list, absolute url path.
+
+### **allowed_url_patterns** (Redis sorted list, required, priority from highest score(5) to lowest score(1), zrevrangeBYScore): allowed url patterns to be downloaded
+
+### **url_pattern_setting_{pattern}** (Redis hash, optional) : 
     - **limitation**: download count limitation in an interval
     - **interval**: duration to reset count
     - **expire**: cache time
-
+    - **parallelism**: max number of workers working on this pattern(host)
 
 ## TODO
