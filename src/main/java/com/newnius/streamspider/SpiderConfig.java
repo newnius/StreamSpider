@@ -1,13 +1,14 @@
 package com.newnius.streamspider;
 
+import com.newnius.streamspider.util.JedisDAO;
+import redis.clients.jedis.Jedis;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class SpiderConfig {
-	public static final String TOPOLOGY_NAME = "StreamSpider";
-
-	// public static String mongodb_host = "192.168.56.110";
-
-	public static String mongodb_host = "172.18.0.8";
-
-	public static int mongodb_port = 27017;
+    private static Map<String, String> settings = new HashMap<>();
+    private static long lastUpdate = 0;
 
 	public static final int DEFAULT_EXPIRE_SECOND = 24 * 60 * 60; // 1 day
 
@@ -22,5 +23,28 @@ public class SpiderConfig {
 	public static final int PRIORITY_LOWEST = 1;
 
 	public static final int PRIORITY_HIGHEST = 5;
+
+	public static String get(String key){
+        return get(key, null);
+    }
+
+    public static String get(String key, String defaultVal){
+        if (System.currentTimeMillis() - lastUpdate > SpiderConfig.PATTERNS_CACHE_MILLISECOND) {
+            loadSettings();
+            lastUpdate = System.currentTimeMillis();
+        }
+        if(settings.containsKey(key))
+            return settings.get(key);
+        return defaultVal;
+    }
+
+    private static void loadSettings(){
+        settings = new HashMap<>();
+        Jedis jedis = JedisDAO.instance();
+        Map<String, String> pairs = jedis.hgetAll("settings");
+        for (Map.Entry<String, String> entry : pairs.entrySet()) {
+            settings.put(entry.getKey(), entry.getValue());
+        }
+    }
 
 }

@@ -43,7 +43,7 @@ public class SpiderTopology {
 
 		builder.setBolt("url-saver", new URLSaver(), url_saver_parallelism).shuffleGrouping("url-parser", "url").shuffleGrouping("url-filter", "url");
 
-		String topologyName = SpiderConfig.TOPOLOGY_NAME;
+		String topologyName = "StreamSpider";
 
 		try {
 			StormSubmitter.submitTopology(topologyName, conf, builder.createTopology());
