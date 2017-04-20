@@ -22,11 +22,11 @@ public class SpiderTopology {
 		conf.setNumWorkers(4);
 
 		int url_reader_parallelism = 1;
-		int url_filter_parallelism = 1;
-		int downloader_parallelism = 10;
+		int url_filter_parallelism = 3;
+		int downloader_parallelism = 20;
 		int html_saver_parallelism = 1;
 		int html_parser_parallelism = 1;
-		int url_saver_parallelism = 1;
+		int url_saver_parallelism = 3;
 
 
 		TopologyBuilder builder = new TopologyBuilder();

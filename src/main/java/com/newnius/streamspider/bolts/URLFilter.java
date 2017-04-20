@@ -85,6 +85,7 @@ public class URLFilter implements IRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputDeclarer) {
 		outputDeclarer.declareStream("filtered-url", new Fields("pattern", "url"));
+		outputDeclarer.declareStream("url", new Fields("url"));
 
 	}
 
