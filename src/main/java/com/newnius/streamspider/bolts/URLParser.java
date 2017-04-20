@@ -52,8 +52,6 @@ public class URLParser implements IRichBolt {
 			String possibleUrl = link.attr("href");
 			try {
 				URL absoluteUrl = new URL(new URL(url), possibleUrl);
-				if(!absoluteUrl.getProtocol().equals("http") && !absoluteUrl.getProtocol().equals("https"))
-					continue;
 				String newUrl = absoluteUrl.getProtocol()+"://"+absoluteUrl.getHost();
 				if(absoluteUrl.getPort() != -1){
 					newUrl += ":"+absoluteUrl.getPort();
@@ -61,8 +59,7 @@ public class URLParser implements IRichBolt {
 				newUrl += absoluteUrl.getFile();
 				collector.emit("url", new Values(newUrl));
 				logger.debug("new url " + newUrl);
-			} catch (MalformedURLException ex) {
-				logger.warn(ex.getMessage()+" ("+link+")");
+			} catch (MalformedURLException ignored) {
 			}
 		}
 		collector.ack(input);

@@ -43,8 +43,10 @@ public class URLSaver implements IRichBolt {
 			String url = (String) input.getValueByField("url");
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
 			if (pattern != null && !jedis.exists("up_to_date_" + url)) {
-				jedis.lpush("urls_to_download", url);
-				logger.debug("push url " + url);
+				if(jedis.zscore("urls_to_download", url)==null) {
+					jedis.zadd("urls_to_download", System.currentTimeMillis(), url);
+					logger.debug("push url " + url);
+				}
 			}
 		} catch (Exception ex) {
 			logger.warn(ex.getMessage());

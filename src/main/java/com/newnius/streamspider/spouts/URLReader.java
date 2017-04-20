@@ -1,6 +1,7 @@
 package com.newnius.streamspider.spouts;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.newnius.streamspider.util.CRObject;
 import com.newnius.streamspider.util.JedisDAO;
@@ -52,25 +53,21 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void nextTuple() {
-		String url = null;
-		try {
-			Jedis jedis = JedisDAO.instance();
-			url = jedis.rpop("urls_to_download");
-			jedis.close();
-		}catch (Exception ex){
-			ex.printStackTrace();
+		try (Jedis jedis = JedisDAO.instance()) {
+			Set<String> urls = jedis.zrange("urls_to_download", 0, 0); // [start, stop]
+            for(String url: urls) {
+                jedis.zrem("urls_to_download", url);
+                logger.debug("emit " + url);
+                collector.emit("url", new Values(url));
+                logger.debug("no more url, wait.");
+            }
+            if(urls.size()==0){
+                Thread.sleep(100);
+            }
+		} catch (Exception ex) {
+			logger.warn(ex.getMessage());
 		}
-		if (url != null) {
-			logger.debug("emit " + url);
-			collector.emit("url", new Values(url));
-		} else {
-			try {
-				logger.debug("no more url, wait.");
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+
 	}
 
 	@Override
@@ -82,11 +79,11 @@ public class URLReader implements IRichSpout {
 	public void fail(Object msgId) {
 		try {
 			Jedis jedis = JedisDAO.instance();
-			jedis.lpush("urls_to_download", (String) msgId);
+			jedis.zadd("urls_to_download", System.currentTimeMillis(), (String) msgId);
 			jedis.close();
 			logger.warn("fail " + msgId);
 		}catch (Exception ex){
-			ex.printStackTrace();
+			logger.error(ex.getMessage());
 		}
 	}
 
