@@ -55,7 +55,7 @@ public class Downloader implements IRichBolt {
 			logger.debug("Downloaded: " + url);
 			collector.emit("html", new Values(url, html));
 		} else {
-			logger.warn(msg.getMessage());
+			logger.warn(msg.getMessage()+"("+url+")");
 		}
 		collector.ack(input);
 	}

@@ -54,3 +54,5 @@ Spider based on storm platform
     - **parallelism**: max number of workers working on this pattern(host)
 
 ## TODO
+  - ignore nun-text pages (binary file)
+  - consume faster

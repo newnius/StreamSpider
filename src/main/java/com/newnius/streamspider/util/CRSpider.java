@@ -133,6 +133,7 @@ public class CRSpider {
 			}else {
 				conn = (HttpURLConnection) url.openConnection();
 			}
+
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.setRequestMethod("GET");
@@ -141,6 +142,11 @@ public class CRSpider {
 				conn.setRequestProperty("Cookie", cookie);
 			conn.setRequestProperty("User-Agent", userAgent);
 			conn.connect();
+
+//            String contentType = conn.getContentType();
+//			if(!contentType.contains("text/html")){
+//				return new CRMsg(CRErrorCode.FAIL, "Not web page ("+contentType+"). " + urlStr);
+//			}
 
 			InputStream is = conn.getInputStream();
 

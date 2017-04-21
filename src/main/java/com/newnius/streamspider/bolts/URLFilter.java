@@ -52,7 +52,7 @@ public class URLFilter implements IRichBolt {
                 String res = jedis.set("up_to_date_" + url, "1", "NX", "EX", expireTime);
                 if (res != null) { // this url is not up_to_date or never downloaded
                     int no = ThreadLocalRandom.current().nextInt(0, patternSetting.getParallelism());
-                    collector.emit("filtered-url", new Values(pattern + "." + no, url));
+                    collector.emit("filtered-url", new Values(host + "." + no, url));
                     logger.debug("emit filtered url " + url);
                     jedis.incr("count_" + host);
                 }

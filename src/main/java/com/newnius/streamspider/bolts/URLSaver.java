@@ -1,7 +1,6 @@
 package com.newnius.streamspider.bolts;
 
 import java.util.Map;
-import java.util.Set;
 
 import com.newnius.streamspider.util.CRObject;
 import org.apache.storm.task.OutputCollector;
