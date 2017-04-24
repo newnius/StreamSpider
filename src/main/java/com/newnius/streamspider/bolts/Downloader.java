@@ -1,6 +1,5 @@
 package com.newnius.streamspider.bolts;
 
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Map;
 
@@ -15,8 +14,6 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.newnius.streamspider.util.CRErrorCode;
-import com.newnius.streamspider.util.CRMsg;
 import com.newnius.streamspider.util.CRSpider;
 
 
@@ -43,19 +40,17 @@ public class Downloader implements IRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		String url = input.getStringByField("url");
-		CRSpider spider = new CRSpider(url);
-        Proxy proxy = null;
+		CRSpider spider = new CRSpider();
         if(proxy_host!=null) {
-            proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(proxy_host, proxy_port));
-        }
-        spider.setProxy(proxy);
-		CRMsg msg = spider.doGet();
-		if (msg.getCode() == CRErrorCode.SUCCESS) {
-			String html = msg.get("response");
+			spider.setProxy(Proxy.Type.SOCKS, proxy_host, proxy_port);
+		}
+		spider.doGet(url);
+		if (spider.getStatusCode() == 200) {
+			String html = spider.getHtml();
 			logger.debug("Downloaded: " + url);
 			collector.emit("html", new Values(url, html));
 		} else {
-			logger.warn(msg.getMessage()+"("+url+")");
+			logger.warn(spider.getErrMsg()+"("+url+")");
 		}
 		collector.ack(input);
 	}
