@@ -57,7 +57,7 @@ public class URLParser implements IRichBolt {
 					newUrl += ":"+absoluteUrl.getPort();
 				}
 				newUrl += absoluteUrl.getFile();
-				collector.emit("url", new Values(newUrl));
+				collector.emit("url", new Values(newUrl, 0));
 				logger.debug("new url " + newUrl);
 			} catch (MalformedURLException ignored) {
 			}
@@ -72,7 +72,7 @@ public class URLParser implements IRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declareStream("url", new Fields("url"));
+		declarer.declareStream("url", new Fields("url", "delay"));
 	}
 
 	@Override

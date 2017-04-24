@@ -40,10 +40,11 @@ public class URLSaver implements IRichBolt {
 	public void execute(Tuple input) {
 		try (Jedis jedis = JedisDAO.instance()) {
 			String url = (String) input.getValueByField("url");
+			int delay = (int)input.getValueByField("delay")*1000;
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
 			if (pattern != null && !jedis.exists("up_to_date_" + url)) {
 				if(jedis.zscore("urls_to_download", url)==null) {
-					jedis.zadd("urls_to_download", System.currentTimeMillis(), url);
+					jedis.zadd("urls_to_download", System.currentTimeMillis()+delay, url);
 					logger.debug("push url " + url);
 				}
 			}

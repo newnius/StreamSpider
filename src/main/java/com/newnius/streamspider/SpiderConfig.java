@@ -10,7 +10,7 @@ public class SpiderConfig {
     private static Map<String, String> settings = new HashMap<>();
     private static long lastUpdate = 0;
 
-	public static final int DEFAULT_EXPIRE_SECOND = 24 * 60 * 60; // 1 day
+	public static final int DEFAULT_EXPIRE_SECOND = 7 * 24 * 60 * 60; // 1 day
 
 	public static final long PATTERNS_CACHE_MILLISECOND = 60 * 1000;
 
