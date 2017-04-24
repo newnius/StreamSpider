@@ -1,6 +1,8 @@
 package com.newnius.streamspider.bolts;
 
 import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.newnius.streamspider.util.StringConverter;
@@ -41,6 +43,11 @@ public class Downloader implements IRichBolt {
 	public void execute(Tuple input) {
 		String url = input.getStringByField("url");
 		CRSpider spider = new CRSpider();
+
+        List<String> mimes = new ArrayList<>();
+        mimes.add("text/html");
+        spider.setAllowedMimeTypes(mimes);
+
         if(proxy_host!=null) {
 			spider.setProxy(Proxy.Type.SOCKS, proxy_host, proxy_port);
 		}
@@ -48,8 +55,10 @@ public class Downloader implements IRichBolt {
 		if (spider.getStatusCode() == 200) {
 			String html = spider.getHtml();
 			logger.debug("Downloaded: " + url);
-			collector.emit("html", new Values(url, html));
-		} else {
+            if(html != null){// mime type not respected
+                collector.emit("html", new Values(url, html));
+            }
+		} else if(spider.getStatusCode()==0){
 			logger.warn(spider.getErrMsg()+"("+url+")");
 		}
 		collector.ack(input);
