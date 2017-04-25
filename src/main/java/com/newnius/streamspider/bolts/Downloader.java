@@ -58,7 +58,7 @@ public class Downloader implements IRichBolt {
             if(html != null){// mime type not respected
                 collector.emit("html", new Values(url, html));
             }
-		} else if(spider.getStatusCode()==0){
+		} else if(spider.getErrMsg() != null){
 			logger.warn(spider.getErrMsg()+"("+url+")");
 		}
 		collector.ack(input);

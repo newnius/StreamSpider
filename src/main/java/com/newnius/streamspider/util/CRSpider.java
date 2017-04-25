@@ -4,6 +4,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -270,6 +271,7 @@ public class CRSpider {
 	* */
 	private HttpClient buildHttpClient(){
 		HttpClient httpClient;
+		RequestConfig config = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(15000).setCookieSpec(CookieSpecs.STANDARD).build();
 		if(proxy_type == Proxy.Type.SOCKS){
 			Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
 					.register("http", new PlainConnectionSocketFactory(){
@@ -299,6 +301,7 @@ public class CRSpider {
 
 			PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
 			httpClient = HttpClients.custom()
+					.setDefaultRequestConfig(config)
 					.setConnectionManager(cm)
 					.disableRedirectHandling()
 					.build();
@@ -307,13 +310,11 @@ public class CRSpider {
 
 		}else if(proxy_type == Proxy.Type.HTTP){
 			HttpHost proxy = new HttpHost(proxy_host, proxy_port, null);
-			RequestConfig config = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(15000).build();
 			httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config)
 					.setProxy(proxy)
 					.disableRedirectHandling()
 					.build();
 		}else{ //direct
-			RequestConfig config = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(15000).build();
 			httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).disableRedirectHandling().build();
 		}
 		return httpClient;
@@ -339,6 +340,11 @@ public class CRSpider {
 		}
 	}
 
+
+	/*
+	* convert encoding to utf-8
+	* Ref: http://justdo2008.iteye.com/blog/463753
+	* */
 	private void parseBody(HttpEntity entity){
 		try {
 			InputStream is = entity.getContent();

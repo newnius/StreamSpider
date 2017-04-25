@@ -1,8 +1,11 @@
 package com.newnius.streamspider.bolts;
 
+import java.net.URL;
 import java.util.Map;
 
+import com.newnius.streamspider.model.UrlPatternSetting;
 import com.newnius.streamspider.util.CRObject;
+import com.newnius.streamspider.util.StringConverter;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -44,8 +47,14 @@ public class URLSaver implements IRichBolt {
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
 			if (pattern != null && !jedis.exists("up_to_date_" + url)) {
 				if(jedis.zscore("urls_to_download", url)==null) {
-					jedis.zadd("urls_to_download", System.currentTimeMillis()+delay, url);
-					logger.debug("push url " + url);
+					UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
+					String host = new URL(url).getHost();
+					long count = StringConverter.string2int(jedis.get("countq_" + host), 0);
+					if (count < patternSetting.getLimitation()*2+50 || patternSetting.getLimitation() == -1) {
+						jedis.zadd("urls_to_download", System.currentTimeMillis()+delay, url);
+                        jedis.incr("countq_" + host);
+						logger.debug("push url " + url);
+					}
 				}
 			}
 		} catch (Exception ex) {

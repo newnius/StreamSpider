@@ -1,5 +1,6 @@
 package com.newnius.streamspider.spouts;
 
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,11 +59,14 @@ public class URLReader implements IRichSpout {
             for(String url: urls) {
                 jedis.zrem("urls_to_download", url);
                 logger.debug("emit " + url);
-                collector.emit("url", new Values(url));
-                logger.debug("no more url, wait.");
+                collector.emit("url", new Values(url), url);
+
+				String host = new URL(url).getHost();
+				jedis.incrBy("countq_"+host, -1);
             }
             if(urls.size()==0){
-                Thread.sleep(100);
+				logger.debug("no more url, wait.");
+				Thread.sleep(100);
             }
 		} catch (Exception ex) {
 			logger.warn(ex.getMessage());
@@ -72,7 +76,7 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void ack(Object msgId) {
-		logger.info("ack " + msgId);
+		logger.debug("ack " + msgId);
 	}
 
 	@Override
