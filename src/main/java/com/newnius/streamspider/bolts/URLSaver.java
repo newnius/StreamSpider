@@ -50,7 +50,7 @@ public class URLSaver implements IRichBolt {
 					UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
 					String host = new URL(url).getHost();
 					long count = StringConverter.string2int(jedis.get("countq_" + host), 0);
-					if (count < patternSetting.getLimitation()*2+50 || patternSetting.getLimitation() == -1) {
+					if (count < patternSetting.getLimitation()+50 || patternSetting.getLimitation() == -1) {
 						jedis.zadd("urls_to_download", System.currentTimeMillis()+delay, url);
                         jedis.incr("countq_" + host);
 						logger.debug("push url " + url);

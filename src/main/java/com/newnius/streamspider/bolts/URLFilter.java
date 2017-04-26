@@ -56,7 +56,7 @@ public class URLFilter implements IRichBolt {
                     logger.debug("emit filtered url " + url);
                     jedis.incr("count_" + host);
                 }
-                if (count == 0) {// set expire time if not set
+                if (count < 5) {// set expire time if not set, == 0 will not work in high concurrency
                     jedis.expire("count_" + host, patternSetting.getInterval());
                 }
             } else {

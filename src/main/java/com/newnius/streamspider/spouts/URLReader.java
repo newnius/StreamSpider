@@ -15,6 +15,7 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Tuple;
 
 public class URLReader implements IRichSpout {
 
@@ -55,16 +56,20 @@ public class URLReader implements IRichSpout {
 	@Override
 	public void nextTuple() {
 		try (Jedis jedis = JedisDAO.instance()) {
-			Set<String> urls = jedis.zrange("urls_to_download", 0, 0); // [start, stop]
-            for(String url: urls) {
-                jedis.zrem("urls_to_download", url);
-                logger.debug("emit " + url);
-                collector.emit("url", new Values(url), url);
-
-				String host = new URL(url).getHost();
+			//Set<String> urls = jedis.zrange("urls_to_download", 0, 0); // [start, stop]
+			Set<Tuple> tuples = jedis.zrangeWithScores("urls_to_download", 0, 0); // [start, stop]
+            for(Tuple tuple: tuples) {
+                if(tuple.getScore() > System.currentTimeMillis()){
+                    Thread.sleep(50);
+                    continue;
+                }
+                jedis.zrem("urls_to_download", tuple.getElement());
+                logger.debug("emit " + tuple.getElement());
+                collector.emit("url", new Values(tuple.getElement()), tuple.getElement());
+				String host = new URL(tuple.getElement()).getHost();
 				jedis.incrBy("countq_"+host, -1);
             }
-            if(urls.size()==0){
+            if(tuples.size()==0){
 				logger.debug("no more url, wait.");
 				Thread.sleep(100);
             }
@@ -85,7 +90,7 @@ public class URLReader implements IRichSpout {
 			Jedis jedis = JedisDAO.instance();
 			jedis.zadd("urls_to_download", System.currentTimeMillis(), (String) msgId);
 			jedis.close();
-			logger.warn("fail " + msgId);
+			//logger.warn("fail " + msgId);
 		}catch (Exception ex){
 			logger.error(ex.getMessage());
 		}

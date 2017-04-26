@@ -271,7 +271,7 @@ public class CRSpider {
 	* */
 	private HttpClient buildHttpClient(){
 		HttpClient httpClient;
-		RequestConfig config = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(15000).setCookieSpec(CookieSpecs.STANDARD).build();
+		RequestConfig config = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(15000).setCookieSpec(CookieSpecs.DEFAULT).build();
 		if(proxy_type == Proxy.Type.SOCKS){
 			Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
 					.register("http", new PlainConnectionSocketFactory(){

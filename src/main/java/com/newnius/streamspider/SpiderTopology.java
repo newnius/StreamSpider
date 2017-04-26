@@ -20,10 +20,11 @@ public class SpiderTopology {
 
 		conf.setMaxSpoutPending(5000);
 		conf.setNumWorkers(4);
+		conf.setMessageTimeoutSecs(60);
 
 		int url_reader_parallelism = 1;
 		int url_filter_parallelism = 3;
-		int downloader_parallelism = 20;
+		int downloader_parallelism = 100;
 		int html_saver_parallelism = 1;
 		int html_parser_parallelism = 1;
 		int url_saver_parallelism = 3;
