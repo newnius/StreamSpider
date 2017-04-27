@@ -60,6 +60,8 @@ public class Downloader implements IRichBolt {
             }
 		} else if(spider.getErrMsg() != null){
 			logger.warn(spider.getErrMsg()+"("+url+")");
+			collector.fail(input);
+			return;
 		}
 		collector.ack(input);
 	}

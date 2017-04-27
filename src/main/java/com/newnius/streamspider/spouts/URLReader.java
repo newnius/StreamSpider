@@ -56,7 +56,6 @@ public class URLReader implements IRichSpout {
 	@Override
 	public void nextTuple() {
 		try (Jedis jedis = JedisDAO.instance()) {
-			//Set<String> urls = jedis.zrange("urls_to_download", 0, 0); // [start, stop]
 			Set<Tuple> tuples = jedis.zrangeWithScores("urls_to_download", 0, 0); // [start, stop]
             for(Tuple tuple: tuples) {
                 if(tuple.getScore() > System.currentTimeMillis()){
@@ -86,14 +85,18 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void fail(Object msgId) {
-		try {
-			Jedis jedis = JedisDAO.instance();
-			jedis.zadd("urls_to_download", System.currentTimeMillis(), (String) msgId);
-			jedis.close();
-			//logger.warn("fail " + msgId);
-		}catch (Exception ex){
-			logger.error(ex.getMessage());
-		}
+        try (Jedis jedis = JedisDAO.instance()) {
+            long cnt = jedis.sadd("failed_urls", (String)msgId);
+            if(cnt==1) {//first fail
+                //reset flag
+                jedis.del("up_to_date_"+msgId);
+                //re-emit
+                collector.emit("url", new Values((String) msgId), msgId);
+            }//else ignore
+            //logger.warn("fail "+msgId);
+        }catch (Exception ex){
+            logger.warn(ex.getMessage());
+        }
 	}
 
 	@Override

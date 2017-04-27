@@ -1,7 +1,7 @@
 package com.newnius.streamspider.bolts;
 
 import java.net.URL;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.newnius.streamspider.util.CRObject;
@@ -39,6 +39,10 @@ public class URLFilter implements IRichBolt {
 	public void execute(Tuple tuple) {
         try (Jedis jedis = JedisDAO.instance()) {
             String url = tuple.getStringByField("url");
+            if(isFile(url)){
+                collector.ack(tuple);
+                return;
+            }
             String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
             if (pattern == null) {
                 collector.ack(tuple);
@@ -69,6 +73,23 @@ public class URLFilter implements IRichBolt {
             ex.printStackTrace();
             collector.fail(tuple);
         }
+    }
+
+    private boolean isFile(String url){
+        String[] array = {
+                ".png", ".jpg", ".jpeg", ".gif", ".bmp",
+                ".flv", ".swf", ".mkv", ".avi", ".rm", ".rmvb", ".mpeg", ".mpg",
+                ".ogg", ".ogv", ".mov", ".wmv", ".mp4", ".webm", ".mp3", ".wav", ".mid",
+                ".rar", ".zip", ".tar", ".gz", ".7z", ".bz2", ".cab", ".iso",
+                ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".md", ".xml"
+        };
+        Set<String> extensions = new HashSet<>(Arrays.asList(array));
+        String extension = "";
+        int i = url.lastIndexOf('.');
+        if (i > 0) {
+            extension = url.substring(i).toLowerCase();
+        }
+        return extensions.contains(extension);
     }
 
 	@SuppressWarnings("rawtypes")
