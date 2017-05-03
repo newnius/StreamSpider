@@ -1,6 +1,7 @@
 package com.newnius.streamspider.bolts;
 
 import java.net.Proxy;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,14 +50,15 @@ public class Downloader implements IRichBolt {
         spider.setAllowedMimeTypes(mimes);
 
         if(proxy_host!=null) {
-			spider.setProxy(Proxy.Type.SOCKS, proxy_host, proxy_port);
+			//spider.setProxy(Proxy.Type.SOCKS, proxy_host, proxy_port);
 		}
 		spider.doGet(url);
 		if (spider.getStatusCode() == 200) {
 			String html = spider.getHtml();
+			String charset = spider.getCharset();
 			logger.debug("Downloaded: " + url);
             if(html != null){// mime type not respected
-                collector.emit("html", new Values(url, html));
+                collector.emit("html", new Values(url, html, charset));
             }
 		} else if(spider.getErrMsg() != null){
 			logger.warn(spider.getErrMsg()+"("+url+")");
@@ -73,7 +75,7 @@ public class Downloader implements IRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declareStream("html", new Fields("url", "html"));
+		declarer.declareStream("html", new Fields("url", "html", "charset"));
 	}
 
 	@Override

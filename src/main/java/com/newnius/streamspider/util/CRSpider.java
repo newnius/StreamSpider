@@ -19,6 +19,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -29,7 +30,6 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -85,6 +85,8 @@ public class CRSpider {
 
 	private String errMsg;
 
+    private int redirectsCount = 0;
+
 	public CRSpider() {
 		logger = CRLogger.getLogger(TAG);
 		userAgent = UA.random();
@@ -98,7 +100,11 @@ public class CRSpider {
 		return this;
 	}
 
-	public CRSpider setAllowedMimeTypes(List<String> allowedMimeTypes){
+    public String getCharset() {
+        return charset;
+    }
+
+    public CRSpider setAllowedMimeTypes(List<String> allowedMimeTypes){
 		this.allowedMimeTypes = allowedMimeTypes;
 		return this;
 	}
@@ -142,9 +148,8 @@ public class CRSpider {
 	* auto fill cookie, referer, convert charset, choose UA
 	* */
 	public void doGet(String url) {
+		clean(url);
 		try {
-			url = encodeUrl(url);
-			clean(url);
 			HttpGet httpGet = new HttpGet();
 			httpGet.setURI(new URI(url));
 			httpGet.setHeader("User-Agent", userAgent);
@@ -167,11 +172,14 @@ public class CRSpider {
 				return;
 			}
 			if(followRedirects && (statusCode==301 || statusCode ==302)){
-				currentStr = url;
-				url = response.getFirstHeader("Location").getValue();
-				url = new URL(new URL(currentStr), url).toString();
-				url = new String(url.getBytes(charset),"utf-8");
-				url = encodeUrl(url);
+                redirectsCount++;
+                if(redirectsCount > 5){
+                    errMsg = "Maximum Redirects Exceeded.";
+                    return;
+                }
+				String newUrl = response.getFirstHeader("Location").getValue();
+				url = new URL(new URL(url), newUrl).toString();
+				url = new String(url.getBytes("ISO-8859-1"), "utf-8");
 				doGet(url);
 				return;
 			}
@@ -182,76 +190,18 @@ public class CRSpider {
 			parseBody(entity);
 			currentStr = url;
 		}catch (Exception ex){
-			errMsg = ex.getMessage();
-		}
-	}
-
-	public CRMsg doPost(final Map<String, String> paramMap) {
-		contentType = CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED;
-		String postdata = "";
-		try {
-			for (Map.Entry<String, String> entry : paramMap.entrySet()) {
-				postdata += entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), "utf-8") + "&";
-			}
-		} catch (Exception ex) {
-			logger.error(ex.getMessage());
-			return new CRMsg(CRErrorCode.FAIL, ex.getMessage());
-		}
-		return doPost(postdata);
-	}
-
-
-	/**
-	 * Untested
-	 */
-	public CRMsg doPost(final String postdata) {
-		try {
-			URL url = new URL(currentStr);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setDoInput(true);
-			conn.setDoOutput(true);
-			conn.setRequestMethod("POST");
-			for(String cookie: cookies) {
-				conn.addRequestProperty("Cookie", cookie);
-			}
-			conn.setRequestProperty("User-Agent", userAgent);
-			conn.setRequestProperty("Content-Type", contentType);
-			conn.setInstanceFollowRedirects(followRedirects);
-			conn.connect();
-			DataOutputStream out = new DataOutputStream(conn.getOutputStream());
-			out.writeBytes(postdata);
-			out.flush();
-			out.close();
-			InputStream is = conn.getInputStream();
-
-			BufferedReader br = new BufferedReader(new InputStreamReader(is, charset));
-			String response = "";
-			String readLine;
-			while ((readLine = br.readLine()) != null) {
-				response = response + readLine;
-			}
-			//headers = conn.getHeaderFields();
-
-			is.close();
-			br.close();
-			conn.disconnect();
-			String sourceCode = response;
-			CRMsg msg = new CRMsg(CRErrorCode.SUCCESS);
-			msg.set("response", sourceCode);
-			return msg;
-		} catch (Exception ex) {
-			logger.error(ex.getMessage());
-			return new CRMsg(CRErrorCode.FAIL, ex.getMessage());
+			errMsg = ex.getClass().getSimpleName()+":"+ex.getMessage();
 		}
 	}
 
 	/*
-	* clean cookie of anaother site
+	* clean cookie of another site
 	* clean errMsg, status code
 	* */
 	private void clean(String url){
 		statusCode = 0;
 		errMsg = null;
+        redirectsCount=0;
 		try {
 			if (currentStr != null && !new URL(currentStr).getHost().equals(new URL(url).getHost())) {
 				context = HttpClientContext.create();
@@ -259,7 +209,7 @@ public class CRSpider {
 				charset = null;
 			}
 		}catch (Exception ex){
-			errMsg = ex.getMessage();
+			errMsg = ex.getClass().getSimpleName()+":"+ex.getMessage();
 		}
 	}
 
@@ -271,7 +221,7 @@ public class CRSpider {
 	* */
 	private HttpClient buildHttpClient(){
 		HttpClient httpClient;
-		RequestConfig config = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(15000).setCookieSpec(CookieSpecs.DEFAULT).build();
+		RequestConfig config = RequestConfig.custom().setConnectTimeout(30000).setSocketTimeout(15000).setCookieSpec(CookieSpecs.DEFAULT).setRedirectsEnabled(false).build();
 		if(proxy_type == Proxy.Type.SOCKS){
 			Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
 					.register("http", new PlainConnectionSocketFactory(){
@@ -303,7 +253,6 @@ public class CRSpider {
 			httpClient = HttpClients.custom()
 					.setDefaultRequestConfig(config)
 					.setConnectionManager(cm)
-					.disableRedirectHandling()
 					.build();
 			InetSocketAddress socksAddr = new InetSocketAddress(proxy_host, proxy_port);
 			context.setAttribute("socks.address", socksAddr);
@@ -312,10 +261,9 @@ public class CRSpider {
 			HttpHost proxy = new HttpHost(proxy_host, proxy_port, null);
 			httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config)
 					.setProxy(proxy)
-					.disableRedirectHandling()
 					.build();
 		}else{ //direct
-			httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).disableRedirectHandling().build();
+			httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
 		}
 		return httpClient;
 	}
@@ -347,15 +295,9 @@ public class CRSpider {
 	* */
 	private void parseBody(HttpEntity entity){
 		try {
-			InputStream is = entity.getContent();
-			ByteArrayOutputStream os = new ByteArrayOutputStream(1024);
-			byte[] temp = new byte[1024];
-			int size;
-			while ((size = is.read(temp)) != -1) {
-				os.write(temp, 0, size);
-			}
+			byte[] bytes = EntityUtils.toByteArray(entity);
 			if (charset == null) {
-				Document doc = Jsoup.parse(os.toString());
+				Document doc = Jsoup.parse(new String(bytes));
 				Elements metaTags = doc.getElementsByTag("meta");
 				for (Element metaTag : metaTags) {
 					String content = metaTag.attr("content");
@@ -374,44 +316,10 @@ public class CRSpider {
 				if (charset == null || charset.isEmpty())
 					charset = "utf-8";
 			}
-			html = new String(os.toByteArray(), charset);
+			html = new String(bytes, charset);
 		}catch (Exception ex){
-			errMsg = ex.getMessage();
+			errMsg = ex.getClass().getSimpleName()+":"+ex.getMessage();
 		}
 	}
 
-
-
-	/*
-	*
-	* handle with white space and Chinese characters
-	* From: http://www.jianshu.com/p/9be694c8fee2
-	* */
-	private String encodeUrl(String url){
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < url.length(); i++) {
-			char c = url.charAt(i);
-			if (c <= 255) {
-				sb.append(c);
-			} else {
-				byte[] b;
-				try {
-					b = String.valueOf(c).getBytes("utf-8");
-				} catch (Exception ex) {
-					logger.warn(ex.getMessage());
-					b = new byte[0];
-				}
-				for (byte aB : b) {
-					int k = aB;
-					if (k < 0)
-						k += 256;
-					sb.append("%").append(Integer.toHexString(k).toUpperCase());
-				}
-			}
-		}
-		url = sb.toString();
-		//fix url encode bug
-		url = url.replaceAll(" ", "%20");
-		return url;
-	}
 }

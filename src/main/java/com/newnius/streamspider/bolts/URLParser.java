@@ -2,10 +2,12 @@ package com.newnius.streamspider.bolts;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import com.newnius.streamspider.util.CRObject;
 import com.newnius.streamspider.util.JedisDAO;
+import com.newnius.streamspider.util.StringUtils;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -44,6 +46,7 @@ public class URLParser implements IRichBolt {
 	public void execute(Tuple input) {
 		String url = input.getStringByField("url");
 		String html = input.getStringByField("html");
+		String charset = input.getStringByField("charset");
 
 		/* get all links as possible urls */
 		Document doc = Jsoup.parse(html);
@@ -52,11 +55,12 @@ public class URLParser implements IRichBolt {
 			String possibleUrl = link.attr("href");
 			try {
 				URL absoluteUrl = new URL(new URL(url), possibleUrl);
-				String newUrl = absoluteUrl.getProtocol()+"://"+absoluteUrl.getHost();
-				if(absoluteUrl.getPort() != -1){
-					newUrl += ":"+absoluteUrl.getPort();
+				String newUrl = absoluteUrl.getProtocol() + "://" + absoluteUrl.getHost();
+				if (absoluteUrl.getPort() != -1) {
+					newUrl += ":" + absoluteUrl.getPort();
 				}
 				newUrl += absoluteUrl.getFile();
+				newUrl = StringUtils.encodeUrl(new URL(newUrl), Charset.forName(charset));
 				collector.emit("url", new Values(newUrl, 0));
 				logger.debug("new url " + newUrl);
 			} catch (MalformedURLException ignored) {
