@@ -65,13 +65,13 @@ public class URLFilter implements IRichBolt {
                 }
             } else {
                 if (!jedis.exists("up_to_date_" + url)) {
-                    collector.emit("url", new Values(url, patternSetting.getInterval()));
+                    collector.emit("url", tuple, new Values(url));
                 }
             }
             collector.ack(tuple);
         } catch (Exception ex) {
-            ex.printStackTrace();
-            collector.fail(tuple);
+            logger.warn(ex.getClass().getSimpleName()+":"+ex.getMessage());
+            collector.ack(tuple);
         }
     }
 
@@ -106,7 +106,7 @@ public class URLFilter implements IRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputDeclarer) {
 		outputDeclarer.declareStream("filtered-url", new Fields("pattern", "url"));
-		outputDeclarer.declareStream("url", new Fields("url", "delay"));
+		outputDeclarer.declareStream("url", new Fields("url"));
 
 	}
 

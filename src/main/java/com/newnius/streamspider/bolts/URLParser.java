@@ -43,10 +43,10 @@ public class URLParser implements IRichBolt {
 	}
 
 	@Override
-	public void execute(Tuple input) {
-		String url = input.getStringByField("url");
-		String html = input.getStringByField("html");
-		String charset = input.getStringByField("charset");
+	public void execute(Tuple tuple) {
+		String url = tuple.getStringByField("url");
+		String html = tuple.getStringByField("html");
+		String charset = tuple.getStringByField("charset");
 
 		/* get all links as possible urls */
 		Document doc = Jsoup.parse(html);
@@ -61,12 +61,12 @@ public class URLParser implements IRichBolt {
 				}
 				newUrl += absoluteUrl.getFile();
 				newUrl = StringUtils.encodeUrl(new URL(newUrl), Charset.forName(charset));
-				collector.emit("url", new Values(newUrl, 0));
+				collector.emit("url", new Values(newUrl));// no anchor to speed up
 				logger.debug("new url " + newUrl);
 			} catch (MalformedURLException ignored) {
 			}
 		}
-		collector.ack(input);
+		collector.ack(tuple);
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class URLParser implements IRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declareStream("url", new Fields("url", "delay"));
+		declarer.declareStream("url", new Fields("url"));
 	}
 
 	@Override

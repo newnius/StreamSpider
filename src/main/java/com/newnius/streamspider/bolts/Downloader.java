@@ -1,7 +1,6 @@
 package com.newnius.streamspider.bolts;
 
 import java.net.Proxy;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,7 @@ public class Downloader implements IRichBolt {
 	private static final long serialVersionUID = 7624774326486651896L;
 	private OutputCollector collector;
 	private Logger logger;
-	private String proxy_host;
+	private String proxy_host = null;
 	private int proxy_port;
 
 	@SuppressWarnings("rawtypes")
@@ -36,13 +35,17 @@ public class Downloader implements IRichBolt {
 	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 		this.logger = LoggerFactory.getLogger(Downloader.class);
-		proxy_host = conf.get("PROXY_HOST").toString();
-		proxy_port = StringConverter.string2int(conf.get("PROXY_PORT").toString(), 7001);
+		if(conf.containsKey("PROXY_HOST")) {
+			proxy_host = conf.get("PROXY_HOST").toString();
+		}
+		if(conf.containsKey("PROXY_PORT")) {
+			proxy_port = StringConverter.string2int(conf.get("PROXY_PORT").toString(), 7001);
+		}
 	}
 
 	@Override
-	public void execute(Tuple input) {
-		String url = input.getStringByField("url");
+	public void execute(Tuple tuple) {
+		String url = tuple.getStringByField("url");
 		CRSpider spider = new CRSpider();
 
         List<String> mimes = new ArrayList<>();
@@ -50,7 +53,7 @@ public class Downloader implements IRichBolt {
         spider.setAllowedMimeTypes(mimes);
 
         if(proxy_host!=null) {
-			//spider.setProxy(Proxy.Type.SOCKS, proxy_host, proxy_port);
+			spider.setProxy(Proxy.Type.SOCKS, proxy_host, proxy_port);
 		}
 		spider.doGet(url);
 		if (spider.getStatusCode() == 200) {
@@ -58,14 +61,12 @@ public class Downloader implements IRichBolt {
 			String charset = spider.getCharset();
 			logger.debug("Downloaded: " + url);
             if(html != null){// mime type not respected
-                collector.emit("html", new Values(url, html, charset));
+                collector.emit("html", tuple, new Values(url, html, charset));
             }
 		} else if(spider.getErrMsg() != null){
 			logger.warn(spider.getErrMsg()+"("+url+")");
-			collector.fail(input);
-			return;
 		}
-		collector.ack(input);
+		collector.ack(tuple);
 	}
 
 	@Override

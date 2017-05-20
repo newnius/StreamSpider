@@ -199,9 +199,11 @@ public class CRSpider {
 	* clean errMsg, status code
 	* */
 	private void clean(String url){
+		if(statusCode!=301 && statusCode !=302) {
+			redirectsCount = 0;
+		}
 		statusCode = 0;
 		errMsg = null;
-        redirectsCount=0;
 		try {
 			if (currentStr != null && !new URL(currentStr).getHost().equals(new URL(url).getHost())) {
 				context = HttpClientContext.create();
@@ -221,7 +223,7 @@ public class CRSpider {
 	* */
 	private HttpClient buildHttpClient(){
 		HttpClient httpClient;
-		RequestConfig config = RequestConfig.custom().setConnectTimeout(30000).setSocketTimeout(15000).setCookieSpec(CookieSpecs.DEFAULT).setRedirectsEnabled(false).build();
+		RequestConfig config = RequestConfig.custom().setConnectTimeout(10000).setSocketTimeout(15000).setCookieSpec(CookieSpecs.DEFAULT).setRedirectsEnabled(false).build();
 		if(proxy_type == Proxy.Type.SOCKS){
 			Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
 					.register("http", new PlainConnectionSocketFactory(){

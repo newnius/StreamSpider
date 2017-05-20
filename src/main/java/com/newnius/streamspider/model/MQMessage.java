@@ -8,11 +8,13 @@ public class MQMessage {
     private String url;
     private String html;
     private long time;
+    private String charset;
 
-    public MQMessage(String title, String html, long time) {
+    public MQMessage(String title, String html, long time, String charset) {
         this.url = title;
         this.html = html;
         this.time = time;
+        this.charset = charset;
     }
 
     public String getUrl() {

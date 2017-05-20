@@ -14,11 +14,12 @@ public class SpiderTopology {
 		conf.put("REDIS_HOST", "ss-redis");
 		conf.put("REDIS_PORT", "6379");
 		conf.put("MQ_HOST", "ss-rabbitmq");
-		conf.put("MQ_QUEUE", "stream-spider");
-		conf.put("PROXY_HOST","ss-proxy");
-		conf.put("PROXY_PORT","7001");
+		conf.put("MQ_QUEUE", "ss-pages");
+		conf.put("MQ_QUEUE_URLS", "ss-urls");
+		//conf.put("PROXY_HOST","ss-proxy");
+		//conf.put("PROXY_PORT","7001");
 
-		conf.setMaxSpoutPending(5000);
+		conf.setMaxSpoutPending(10000);
 		conf.setNumWorkers(4);
 		conf.setMessageTimeoutSecs(60);
 
@@ -27,7 +28,7 @@ public class SpiderTopology {
 		int downloader_parallelism = 100;
 		int html_saver_parallelism = 1;
 		int html_parser_parallelism = 1;
-		int url_saver_parallelism = 3;
+		int url_saver_parallelism = 5;
 
 
 		TopologyBuilder builder = new TopologyBuilder();

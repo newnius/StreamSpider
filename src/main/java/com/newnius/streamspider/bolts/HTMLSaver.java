@@ -12,6 +12,8 @@ import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HTMLSaver implements IRichBolt {
 
@@ -20,47 +22,41 @@ public class HTMLSaver implements IRichBolt {
 	 */
 	private static final long serialVersionUID = -7736795729454993219L;
 	private OutputCollector collector;
+	private Logger logger;
 	private String QUEUE_NAME;
     private ConnectionFactory factory;
-	private Connection connection;
 	private Channel channel;
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
+		this.logger = LoggerFactory.getLogger(getClass());
 		QUEUE_NAME = conf.get("MQ_QUEUE").toString();
+		String MQ_HOST = conf.get("MQ_HOST").toString();
 		factory = new ConnectionFactory();
-		factory.setHost(conf.get("MQ_HOST").toString());
-		try {
-			connection = factory.newConnection();
-			channel = connection.createChannel();
-			channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-		}catch (Exception ex){
-			ex.printStackTrace();
-		}
+		factory.setHost(MQ_HOST);
 	}
 
 	@Override
-	public void execute(Tuple input) {
-		String url = input.getStringByField("url");
-		String html = input.getStringByField("html");
+	public void execute(Tuple tuple) {
 		try {
-			MQMessage msg = new MQMessage(url, html, System.currentTimeMillis());
+			String url = tuple.getStringByField("url");
+			String html = tuple.getStringByField("html");
+			String charset = tuple.getStringByField("charset");
+			if(channel==null){
+				Connection connection = factory.newConnection();
+				channel = connection.createChannel();
+				channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+			}
+			MQMessage msg = new MQMessage(url, html, System.currentTimeMillis(), charset);
 			String message = new Gson().toJson(msg);
 			channel.basicPublish("", QUEUE_NAME, null, message.getBytes("UTF-8"));
 		}catch (Exception ex){
-			ex.printStackTrace();
-			try{
-				channel.close();
-				connection.close();
-                connection = factory.newConnection();
-                channel = connection.createChannel();
-                channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-			}catch (Exception ignore){
-			}
+			channel=null;
+			logger.warn(ex.getClass().getSimpleName()+":"+ex.getMessage());
 		}
-		collector.ack(input);
+		collector.ack(tuple);
 	}
 
 	@Override
