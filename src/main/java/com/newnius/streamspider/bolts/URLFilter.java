@@ -65,7 +65,7 @@ public class URLFilter implements IRichBolt {
                 }
             } else {
                 if (!jedis.exists("up_to_date_" + url)) {
-                    collector.emit("url", tuple, new Values(url));
+                    collector.emit("url", new Values(url));//no anchor to speed up
                 }
             }
             collector.ack(tuple);

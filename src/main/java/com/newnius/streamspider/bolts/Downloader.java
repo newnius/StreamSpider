@@ -61,7 +61,7 @@ public class Downloader implements IRichBolt {
 			String charset = spider.getCharset();
 			logger.debug("Downloaded: " + url);
             if(html != null){// mime type not respected
-                collector.emit("html", tuple, new Values(url, html, charset));
+                collector.emit("html", new Values(url, html, charset));
             }
 		} else if(spider.getErrMsg() != null){
 			logger.warn(spider.getErrMsg()+"("+url+")");
