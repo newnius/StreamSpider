@@ -65,7 +65,7 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void nextTuple() {
-		try (Jedis jedis = JedisDAO.instance()) {
+		try{
 			if(channel==null){
 				Connection connection = factory.newConnection();
 				channel = connection.createChannel();
@@ -76,13 +76,11 @@ public class URLReader implements IRichSpout {
 				String url = new String(response.getBody());
 				logger.debug("emit " + url);
 				collector.emit("url", new Values(url), url);
-				String host = new URL(url).getHost();
-				jedis.incrBy("countq_" + host, -1);
 			}else{
+				logger.info("No more urls, waiting...");
+				Thread.sleep(50);
 				String url = "http://www.tsinghua.edu.cn/publish/newthu/index.html";
 				collector.emit("url", new Values(url), url);
-				Thread.sleep(50);
-				logger.info("No more urls, waiting...");
 			}
 		} catch (Exception ex) {
 			channel = null;
@@ -92,16 +90,22 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void ack(Object msgId) {
-		logger.debug("ack " + msgId);
+		try (Jedis jedis = JedisDAO.instance()) {
+			String host = new URL((String)msgId).getHost();
+			jedis.incrBy("countq_" + host, -1);
+			logger.debug("ack " + msgId);
+		} catch (Exception ex) {
+			logger.warn(ex.getClass().getSimpleName()+":"+ex.getMessage());
+		}
 	}
 
 	@Override
 	public void fail(Object msgId) {
         try (Jedis jedis = JedisDAO.instance()) {
 			//reset flag
-			jedis.del("up_to_date_"+msgId);
-			//re-emit
+			jedis.set("up_to_date_"+msgId, "0");
 			collector.emit("url", new Values((String) msgId), msgId);
+			logger.debug("re-emit "+msgId);
         }catch (Exception ex){
 			logger.warn(ex.getClass().getSimpleName()+":"+ex.getMessage());
         }

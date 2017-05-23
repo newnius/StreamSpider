@@ -51,7 +51,6 @@ public class Downloader implements IRichBolt {
         List<String> mimes = new ArrayList<>();
         mimes.add("text/html");
         spider.setAllowedMimeTypes(mimes);
-
         if(proxy_host!=null) {
 			spider.setProxy(Proxy.Type.SOCKS, proxy_host, proxy_port);
 		}

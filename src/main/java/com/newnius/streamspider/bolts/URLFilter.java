@@ -37,42 +37,42 @@ public class URLFilter implements IRichBolt {
 
 	@Override
 	public void execute(Tuple tuple) {
+        String url = tuple.getStringByField("url");
+        String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
+        if(isFile(url) || pattern==null){
+            logger.debug(url+" is not web page or not in white list.");
+            collector.ack(tuple);
+            return;
+        }
         try (Jedis jedis = JedisDAO.instance()) {
-            String url = tuple.getStringByField("url");
-            if(isFile(url)){
-                collector.ack(tuple);
-                return;
-            }
-            String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
-            if (pattern == null) {
-                collector.ack(tuple);
-                return;
-            }
             UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
             int expireTime = patternSetting.getExpire();
             String host = new URL(url).getHost();
             long count = StringConverter.string2int(jedis.get("count_" + host), 0);
             if (count < patternSetting.getLimitation() || patternSetting.getLimitation() == -1) {
-                String res = jedis.set("up_to_date_" + url, "1", "NX", "EX", expireTime);
-                if (res != null) { // this url is not up_to_date or never downloaded
+                int lastUpdate = StringConverter.string2int(jedis.get("up_to_date_" + url), 0);
+                // this url is not up_to_date or never downloaded
+                if(lastUpdate==0 || (patternSetting.getExpire()!=-1 && (System.currentTimeMillis()/1000-lastUpdate)>expireTime)){
+                    long time = System.currentTimeMillis()/1000;
+                    jedis.set("up_to_date_" + url, time+"");
                     int no = ThreadLocalRandom.current().nextInt(0, patternSetting.getParallelism());
                     collector.emit("filtered-url", tuple, new Values(host + "." + no, url));
                     logger.debug("emit filtered url " + url);
                     jedis.incr("count_" + host);
-                }
-                if (count < 5) {// set expire time if not set, == 0 will not work in high concurrency
-                    jedis.expire("count_" + host, patternSetting.getInterval());
+                    if (count < 5) {// set expire time if not set, == 0 may not take effect in high concurrency
+                        jedis.expire("count_" + host, patternSetting.getInterval());
+                    }
+                }else{
+                    logger.debug(url+" already up to date "+lastUpdate);
                 }
             } else {
-                if (!jedis.exists("up_to_date_" + url)) {
-                    collector.emit("url", new Values(url));//no anchor to speed up
-                }
+                collector.emit("url", new Values(url));
+                logger.debug("go back "+url);
             }
-            collector.ack(tuple);
         } catch (Exception ex) {
             logger.warn(ex.getClass().getSimpleName()+":"+ex.getMessage());
-            collector.ack(tuple);
         }
+        collector.ack(tuple);
     }
 
     private boolean isFile(String url){
