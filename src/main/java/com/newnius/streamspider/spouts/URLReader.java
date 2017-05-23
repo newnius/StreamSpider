@@ -101,14 +101,8 @@ public class URLReader implements IRichSpout {
 
 	@Override
 	public void fail(Object msgId) {
-        try (Jedis jedis = JedisDAO.instance()) {
-			//reset flag
-			jedis.set("up_to_date_"+msgId, "0");
-			collector.emit("url", new Values((String) msgId), msgId);
-			logger.debug("re-emit "+msgId);
-        }catch (Exception ex){
-			logger.warn(ex.getClass().getSimpleName()+":"+ex.getMessage());
-        }
+		collector.emit("url", new Values((String) msgId), msgId);
+		logger.debug("re-emit "+msgId);
 	}
 
 	@Override
