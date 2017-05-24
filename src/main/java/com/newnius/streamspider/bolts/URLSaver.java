@@ -61,7 +61,7 @@ public class URLSaver implements IRichBolt {
 			}
 			String url = (String) tuple.getValueByField("url");
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
-			if (pattern != null && !jedis.exists("up_to_date_" + url)) {
+			if (pattern != null) {
 				UrlPatternSetting patternSetting = UrlPatternFactory.getPatternSetting(pattern);
 				String host = new URL(url).getHost();
 				long count = StringConverter.string2int(jedis.get("countq_" + host), 0);

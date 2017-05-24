@@ -44,6 +44,10 @@ public class HTMLSaver implements IRichBolt {
 			String url = tuple.getStringByField("url");
 			String html = tuple.getStringByField("html");
 			String charset = tuple.getStringByField("charset");
+			if(html.length() > 200000){
+				collector.ack(tuple);
+				return;
+			}
 			if(channel==null){
 				Connection connection = factory.newConnection();
 				channel = connection.createChannel();

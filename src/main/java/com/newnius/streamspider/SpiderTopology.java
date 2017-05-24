@@ -19,9 +19,9 @@ public class SpiderTopology {
 		//conf.put("PROXY_HOST","ss-proxy");
 		//conf.put("PROXY_PORT","7001");
 
-		conf.setMaxSpoutPending(30000);
+		conf.setMaxSpoutPending(20000);
 		conf.setNumWorkers(4);
-		conf.setMessageTimeoutSecs(60);
+		conf.setMessageTimeoutSecs(300);
 
 		int url_reader_parallelism = 1;
 		int url_filter_parallelism = 3;
