@@ -5,4 +5,4 @@ docker service create \
 --name ss-saver \
 --network swarm-net \
 --mount type=bind,src=/mnt/share,dst=/mnt/,readonly \
-openjdk:8-jre java -cp /mnt/StreamSaver-0.1.0-SNAPSHOT.jar com.newnius.streamsaver.Main
+openjdk:8-jre java -cp /mnt/StreamSpider-0.1.0-SNAPSHOT.jar com.newnius.streamspider.Consumer
