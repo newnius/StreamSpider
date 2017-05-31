@@ -40,4 +40,12 @@ public class MQMessage {
     public void setTime(long time) {
         this.time = time;
     }
+
+    public String getCharset() {
+        return charset;
+    }
+
+    public void setCharset(String charset) {
+        this.charset = charset;
+    }
 }
