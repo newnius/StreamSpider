@@ -71,6 +71,8 @@ public class CRSpider {
 
 	private List<String> allowedMimeTypes;
 
+	private long maxLength = 200000;
+
 	private Proxy.Type proxy_type = Proxy.Type.DIRECT;
 
 	private String proxy_host;
@@ -282,6 +284,11 @@ public class CRSpider {
 				errMsg = "MimeType("+mimeType+") not in allowedMimeTypes.";
 				return;
 			}
+		}
+		long length = entity.getContentLength();
+		if(maxLength!=0 && length>maxLength ){
+			errMsg = "Length("+length+") greater than maxLength.";
+			return;
 		}
 		Charset cs = contentType.getCharset();
 		if (cs != null) {

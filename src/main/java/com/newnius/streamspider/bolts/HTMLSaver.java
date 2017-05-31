@@ -51,7 +51,7 @@ public class HTMLSaver implements IRichBolt {
 			if(channel==null){
 				Connection connection = factory.newConnection();
 				channel = connection.createChannel();
-				channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+				channel.queueDeclare(QUEUE_NAME, false, true, false, null);
 			}
 			MQMessage msg = new MQMessage(url, html, System.currentTimeMillis(), charset);
 			String message = new Gson().toJson(msg);

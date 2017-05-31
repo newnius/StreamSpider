@@ -57,7 +57,7 @@ public class URLSaver implements IRichBolt {
 			if(channel==null){
 				Connection connection = factory.newConnection();
 				channel = connection.createChannel();
-				channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+				channel.queueDeclare(QUEUE_NAME, false, true, false, null);
 			}
 			String url = (String) tuple.getValueByField("url");
 			String pattern = UrlPatternFactory.getRelatedUrlPattern(url);
